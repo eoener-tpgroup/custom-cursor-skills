@@ -54,38 +54,27 @@ Der Ticket-Key ist das **erste Argument** nach dem Command-Namen. Optionaler Fre
 
 ## Content formatting — Jira (strict, MCP and REST)
 
-**Mandatory for every write path.** Whether the comment is posted via **Jira MCP**, **Service Desk API**, or **REST API 2/3**, the body MUST use **Jira-renderable markup** — never GitHub/GitLab GFM conventions that Jira does not render, and never raw HTML.
+**Mandatory for every write path.** Whether the comment is posted via **Jira MCP**, **Service Desk API**, or **REST API 2/3**, the body MUST use **Jira Wiki Markup** — never GitHub/GitLab GFM, never Jira Markdown (`##`, `` `code` ``, fenced ```` ``` ````), never raw HTML.
 
-### Dialect (detect once, then stick to it)
+### Dialect (fixed)
 
-| Preference | When | Body format |
-|------------|------|-------------|
-| 1 | MCP tool expects ADF / `document` structure | Build valid **Atlassian Document Format** per tool schema |
-| 2 | Cloud / newer Server-DC with Markdown renderer | **Jira Markdown** (string `body`) |
-| 3 | Older Wiki-Markup instances | **Jira Wiki Markup** |
+**Always author and submit the comment as Jira Wiki Markup** (string `body`). Do **not** detect or switch dialects. Do **not** mirror Markdown from existing ticket comments — convert ideas into Wiki Markup.
 
-If unsure which dialect the instance renders, prefer the format already used in existing comments on the same ticket (load one comment first). Do **not** mix dialects in one comment.
+| Preference | Transport | Action |
+|------------|-----------|--------|
+| 1 | REST with string `body` | Pass Wiki Markup string as-is |
+| 2 | MCP tool that only accepts ADF / `document` | Prefer REST with Wiki string; if MCP is required, convert the **Wiki Markup draft** to ADF per schema — never invent Markdown first |
 
-### Jira Markdown (default string body)
+### Jira Wiki Markup (required for comment body)
 
-| Element | Use | Do not use |
-|---------|-----|------------|
-| **Headings** | `## Investigation Summary`, `## Next Steps` | Single `#` (often wrong in Jira); GitHub-only heading tricks |
-| **Bold / italic** | `**bold**`, `*italic*` | HTML `<b>` / `<i>` |
-| **Lists** | `-` bullets for findings; `1.` for ordered steps | Nested GFM task lists if unsupported |
-| **Code** | Fenced ```` ``` ```` blocks or `` `inline` `` | Bare indented code that Jira flattens |
-| **Links** | Full URLs (`https://…`) or Jira `[text\|url]` if Wiki | Cursor deep-links, relative paths |
-| **Quotes** | `>` blockquotes sparingly | Nested quote stacks |
-
-### Jira Wiki Markup (legacy string body)
-
-| Element | Syntax |
-|---------|--------|
-| Headings | `h2. Investigation Summary` |
-| Bold / italic | `*bold*`, `_italic_` |
-| Bullets | `* item` / `# item` (ordered) |
-| Code | `{code}…{code}` or `{noformat}…{noformat}` |
-| Links | `[label\|https://example.com]` |
+| Element | Syntax | Do not use |
+|---------|--------|------------|
+| Headings | `h2. Investigation Summary`, `h3. …` | `## …`, `#` |
+| Bold / italic | `*bold*`, `_italic_` | `**bold**`, HTML `<b>` / `<i>` |
+| Bullets | `* item` / `# item` (ordered) | `- item` GFM lists |
+| Code | `{code}…{code}` or `{noformat}…{noformat}`; inline `{{path}}` | Fenced ```` ``` ````, `` `inline` `` |
+| Links | `[label\|https://example.com]` or full URLs | Markdown `[text](url)`, Cursor deep-links, relative paths |
+| Quotes | `bq. text` sparingly | Nested `>` quote stacks |
 
 ### Technical encoding (MCP and REST)
 
@@ -95,15 +84,15 @@ Applies to **every** transport — MCP tool arguments, `curl` JSON, Service Desk
 2. **Newlines** — real paragraphs as `\n` in JSON strings; blank line between sections
 3. **Special characters** — `"`, `\`, backticks only via proper JSON encoding
 4. **No raw HTML** in `body`
-5. **Preview** — Phase 4 shows the draft as Jira would render it (Markdown/Wiki view), not as escaped JSON
-6. **MCP schema first** — if the tool wants ADF/`content` nodes, convert the draft to that structure; do not pass GFM into an ADF field
+5. **Preview** — Phase 4 shows the draft as Wiki Markup (as Jira would render), not as escaped JSON
+6. **Wiki first** — draft in Wiki Markup; only convert to ADF if an MCP tool schema forces it
 
 ### Pre-post checklist
 
-- [ ] Dialect matches the instance (Markdown, Wiki, or ADF)
+- [ ] Body is **Wiki Markup only** (`h2.`, `*`, `{code}`) — no Markdown/ADF as source
 - [ ] Headings and blank lines between sections
 - [ ] Lists instead of wall-of-text
-- [ ] Code in Jira code fences / `{code}` / ADF code blocks
+- [ ] Code in `{code}` / `{noformat}`
 - [ ] Payload valid for the chosen API (MCP schema or REST JSON)
 - [ ] No secrets, no agent/Cursor meta references
 
@@ -134,7 +123,7 @@ Applies to **every** transport — MCP tool arguments, `curl` JSON, Service Desk
 2. Nur Informationen einbeziehen, die **für Jira-Teilnehmer relevant** sind
 3. Keine internen Tool-/Agent-Referenzen, keine Meta-Kommentare über Automatisierung
 4. Professioneller, sachlicher Ton — als hätte der User persönlich geschrieben
-5. Strukturiert im **Jira-Dialekt** formatieren (siehe **Content formatting — Jira**): Überschriften, Listen, Code-Blöcke — nicht GitHub/GitLab GFM
+5. Strukturiert in **Jira Wiki Markup** formatieren (siehe **Content formatting — Jira**): `h2.`, `*` Listen, `{code}` — nicht Markdown/GFM
 
 **Bei Unklarheiten → User fragen (Pflicht):**
 
@@ -201,12 +190,12 @@ Bei **Cancel**: Kurz bestätigen, dass nichts gepostet wurde.
 
 ### Phase 5: Kommentar posten (nur nach Bestätigung)
 
-**Formatierung:** Siehe **Content formatting — Jira** — gilt für **MCP und REST** gleichermaßen (Jira Markdown / Wiki / ADF laut Schema).
+**Formatierung:** Siehe **Content formatting — Jira** — gilt für **MCP und REST** gleichermaßen (**immer Jira Wiki Markup**).
 
 **Priorität** (wie in `service-credentials.mdc`):
 
-1. Jira MCP prüfen und nutzen, falls verfügbar (Schema vor Aufruf prüfen; Body im geforderten Jira-Format)
-2. **Fallback**: REST API (string `body` als Jira Markdown oder Wiki Markup)
+1. Jira MCP prüfen und nutzen, falls verfügbar (Schema vor Aufruf prüfen; Body als Wiki Markup bzw. aus Wiki nach ADF konvertiert)
+2. **Fallback**: REST API (string `body` als **Jira Wiki Markup**)
 
 **REST API:**
 
@@ -242,45 +231,45 @@ Bei Abbruch:
 
 ---
 
-## Kommentar-Templates
+## Kommentar-Templates (Wiki Markup)
 
 ### Status-Update
 
-```markdown
-## Status Update
+```text
+h2. Status Update
 
 <1-2 sentences on current state>
 
-**Next steps:**
-- <step 1>
-- <step 2>
+*Next steps:*
+* <step 1>
+* <step 2>
 ```
 
 ### Investigation Summary
 
-```markdown
-## Investigation Summary
+```text
+h2. Investigation Summary
 
-**Scope:** <what was investigated>
+*Scope:* <what was investigated>
 
-**Findings:**
-- <finding 1>
-- <finding 2>
+*Findings:*
+* <finding 1>
+* <finding 2>
 
-**Conclusion:** <conclusion>
+*Conclusion:* <conclusion>
 
-**Actions taken:**
-- <action 1>
+*Actions taken:*
+* <action 1>
 ```
 
 ### Fix Deployed
 
-```markdown
-## Fix Applied
+```text
+h2. Fix Applied
 
-**Problem:** <brief problem description>
-**Solution:** <what was done>
-**Verification:** <how it was verified>
+*Problem:* <brief problem description>
+*Solution:* <what was done>
+*Verification:* <how it was verified>
 
 Related: <MR/PR link if applicable>
 ```
