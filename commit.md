@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Erstellt einen Git-Commit nach Conventional Commits. Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
+description: Erstellt einen Git-Commit nach Conventional Commits. Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
 ---
 
 # Commit
@@ -97,7 +97,18 @@ git remote -v
 2. Fallback: `main`, dann `master`, dann `develop`
 3. Wenn unklar: User fragen
 
+**Repo-Erkennung — pitops/ansible:**
+
+Nach `git remote -v` prüfen, ob **irgendeine** Remote-URL auf das Ansible-Repo zeigt:
+
+- SSH: `git@gitlab.office.transporeon.com:pitops/ansible.git` (auch ohne `.git`)
+- HTTPS: Host `gitlab.office.transporeon.com` und Pfad `…/pitops/ansible`
+
+Match → **Ansible-Modus** aktiv (Phase 2 Sonderregeln). Kein Match → normale Default-Branch-Logik.
+
 ### Phase 2: Branch-Strategie
+
+#### Standard (nicht Ansible)
 
 | Situation | Aktion |
 |-----------|--------|
@@ -107,7 +118,32 @@ git remote -v
 
 **Explizite Branch-Anweisung** (aus Phase 0): Wenn der User einen Branch-Namen vorgegeben hat (`branch fix/foo`), diesen verwenden — auch auf Default-Branch. Wenn der User „commit on current branch" o.ä. verlangt hat, keinen neuen Branch erstellen.
 
-**Feature-Branch erstellen** (nur auf Default-Branch, sofern nicht anders angewiesen):
+#### Ansible-Modus (`pitops/ansible`)
+
+**Geschützte Branches** (niemals darauf committen): `development`, `integration`, `acceptance`, `production`.
+
+Diese Regel ist **nicht überschreibbar** — auch nicht durch explizite Anweisungen wie „commit on development“ / „commit on current branch“. Solche Anweisungen **ablehnen**, kurz erklären, und weiterhin einen Feature-Branch von `development` planen (oder abbrechen, wenn der User das wählt).
+
+| Situation | Aktion |
+|-----------|--------|
+| Auf `development` | Feature-Branch von `development` erstellen (User-Branchname oder abgeleitet) |
+| Auf `integration`, `acceptance` oder `production` | **AskQuestion** (siehe unten) — nicht automatisch wechseln |
+| Auf anderem Branch (z.B. bestehender Feature-Branch) | Auf aktuellem Branch committen, sofern nicht geschützt |
+| Detached HEAD | User fragen, wie fortzufahren |
+| User fordert Commit auf geschütztem Branch | Ablehnen; Feature-Branch von `development` anbieten |
+
+**AskQuestion** wenn aktuell auf `integration` / `acceptance` / `production`:
+
+> Current branch `<branch>` is protected in pitops/ansible. How to proceed?
+
+Optionen:
+
+1. **Branch from development** — uncommitted Changes behalten, `development` aktualisieren/auschecken soweit nötig, Feature-Branch von `development` anlegen, dann Commit-Plan fortsetzen
+2. **Cancel** — nichts ändern
+
+**Feature-Branch-Basis in Ansible-Modus:** immer von `development` (lokal syncen falls nötig: `git fetch origin development`, dann von `origin/development` bzw. lokalem `development` branchen — nicht von `integration`/`acceptance`/`production`).
+
+**Feature-Branch erstellen** (Standard: nur auf Default-Branch; Ansible: auf jedem geschützten Branch bzw. wenn neuer Branch geplant):
 
 1. Branch-Namen aus Anweisungen, Änderungen oder Kontext ableiten (nicht generisch wie `feature` oder `fix`)
 2. Format: `<type>/<kurze-beschreibung>` — z.B. `feat/user-auth`, `fix/login-timeout`
@@ -116,7 +152,12 @@ git remote -v
 5. Branch erstellen und wechseln — **erst nach Bestätigung in Phase 5**:
 
 ```bash
+# Standard (vom aktuellen Default-Branch-HEAD):
 git checkout -b <branch-name>
+
+# Ansible (explizit von development):
+git fetch origin development
+git checkout -b <branch-name> origin/development
 ```
 
 ### Phase 3: Änderungen planen (noch nicht stagen)
@@ -209,6 +250,7 @@ BREAKING CHANGE: /api/v1/* routes are removed. Migrate to /api/v2/*.
 |-------|-------|
 | Current branch | `<branch>` |
 | New branch | `<branch-name>` or *(none — commit on current branch)* |
+| Base (ansible) | `origin/development` *(only in ansible mode when creating a branch)* |
 | Files to stage | `<n>` files |
 | Excluded | `<paths or —>` |
 
@@ -284,6 +326,8 @@ EOF
 | Pre-commit Hook schlägt fehl | Hook-Fehler zeigen, **nicht** amend — Problem fixen, **neuer** Commit |
 | Merge-Konflikte | Nicht committen; User informieren |
 | Secrets in Diff | Nicht committen; Dateien warnen |
+| Ansible: Commit auf geschütztem Branch verlangt | Ablehnen; Feature-Branch von `development` anbieten oder abbrechen |
+| Ansible: auf integration/acceptance/production | AskQuestion — von development branchen oder Cancel |
 
 ## Verwandte Commands
 
