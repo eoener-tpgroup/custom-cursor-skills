@@ -31,45 +31,35 @@ Wird manuell via `/jira-create [description]` ausgelöst.
 
 ## Content formatting — Jira (strict, MCP and REST)
 
-**Mandatory for every write path.** Whether the ticket is created via **Jira MCP**, **Service Desk API**, or **REST API 2/3**, fields MUST use **Jira-compatible formatting** — never GitHub/GitLab GFM-only constructs that Jira does not render, and never raw HTML.
+**Mandatory for every write path.** Whether the ticket is created via **Jira MCP**, **Service Desk API**, or **REST API 2/3**, fields MUST use **Jira Wiki Markup** — never GitHub/GitLab GFM, never Jira Markdown (`##`, `` `code` ``, fenced ```` ``` ````), never raw HTML.
 
-### Dialect (detect once, then stick to it)
+### Dialect (fixed)
 
-| Preference | When | Description format |
-|------------|------|--------------------|
-| 1 | MCP tool expects ADF / `document` structure | Build valid **Atlassian Document Format** per tool schema |
-| 2 | Cloud / newer Server-DC with Markdown renderer | **Jira Markdown** (string `description`) |
-| 3 | Older Wiki-Markup instances | **Jira Wiki Markup** |
+**Always author and submit description as Jira Wiki Markup** (string `description`). Do **not** detect or switch dialects. Do **not** use Jira Markdown or hand-written ADF as the source format.
 
-Do **not** mix dialects in one ticket. Prefer the dialect already used on recent PITOPS tickets if known.
+| Preference | Transport | Action |
+|------------|-----------|--------|
+| 1 | REST / Service Desk with string `description` | Pass Wiki Markup string as-is |
+| 2 | MCP tool that only accepts ADF / `document` | Prefer REST with Wiki string; if MCP is required, convert the **Wiki Markup draft** to ADF per schema — never invent Markdown first |
 
 ### Field rules
 
 | Feld | Regeln |
 |------|--------|
-| **Summary** | Plain text only — **no** Markdown/Wiki (`#`, `**`, `h2.`, lists). Max. ~255 chars. Short, specific, single line. Put hostname/service first when relevant |
-| **Description** | Jira Markdown **or** Wiki Markup **or** ADF (see dialect). Structured sections; blank line between sections; follow „Description — Best Practices" |
-| **Links** | Full URLs; no relative paths |
-| **Error messages / logs** | Verbatim inside Jira code fences / `{code}` / ADF code blocks — do not paraphrase |
+| **Summary** | Plain text only — **no** Wiki/Markdown (`h2.`, `*`, `#`, `**`, lists). Max. ~255 chars. Short, specific, single line. Put hostname/service first when relevant |
+| **Description** | **Jira Wiki Markup only**. Structured sections; blank line between sections; follow „Description — Best Practices" |
+| **Links** | `[label\|https://example.com]` or full URLs; no relative paths |
+| **Error messages / logs** | Verbatim inside `{code}…{code}` or `{noformat}…{noformat}` — do not paraphrase |
 
-### Jira Markdown (default string description)
+### Jira Wiki Markup (required for description)
 
-| Element | Use |
-|---------|-----|
-| Headings | `## Problem`, `## Affected Systems`, `## Details`, … — not lone `#` |
-| Lists | `-` bullets |
-| Inline code | `` `hostname` ``, `` `path` `` |
-| Blocks | Fenced ```` ``` ```` for logs/commands |
-| Emphasis | `**bold**` sparingly |
-
-### Jira Wiki Markup (legacy string description)
-
-| Element | Syntax |
-|---------|--------|
-| Headings | `h2. Problem` |
-| Bullets | `* item` |
-| Code | `{code}…{code}` / `{noformat}…{noformat}` |
-| Links | `[label\|https://example.com]` |
+| Element | Syntax | Do not use |
+|---------|--------|------------|
+| Headings | `h2. Problem`, `h3. …` | `## Problem`, `#` |
+| Bold / italic | `*bold*`, `_italic_` | `**bold**`, HTML |
+| Bullets | `* item` / `# item` (ordered) | `- item` GFM lists |
+| Inline / blocks | `{{hostname}}`, `{code}…{code}`, `{noformat}…{noformat}` | Fenced ```` ``` ````, `` `inline` `` |
+| Links | `[label\|https://example.com]` | Markdown `[text](url)` |
 
 ### Technical encoding (MCP and REST)
 
@@ -79,11 +69,11 @@ Applies to **every** transport — MCP tool arguments and `curl` JSON:
 2. **Newlines** — in string `description` as `\n`; blank line between sections
 3. **Special characters** — quotes in logs/paths via proper JSON encoding only
 4. **No HTML** in description
-5. **Preview** — Phase 4 shows Summary + Description as Jira would render them, not escaped JSON
-6. **MCP schema first** — if the tool wants ADF/`content` nodes for description, convert the draft; do not pass a GFM string into an ADF field
+5. **Preview** — Phase 4 shows Summary + Description as Wiki Markup (as Jira would render), not escaped JSON
+6. **Wiki first** — draft in Wiki Markup; only convert to ADF if an MCP tool schema forces it
 
 ```bash
-# Correct: full payload via json.dumps (REST / shell fallback)
+# Correct: full payload via json.dumps (REST / shell fallback) — Wiki Markup description
 python3 <<'PYEOF'
 import json
 payload = {
@@ -91,7 +81,7 @@ payload = {
     "requestTypeId": "657",
     "requestFieldValues": {
         "summary": "db01.example.com - disk alert investigation",
-        "description": "## Problem\n\nFilesystem usage above threshold.\n\n## Details\n\n```\n<log excerpt>\n```",
+        "description": "h2. Problem\n\nFilesystem usage above threshold.\n\nh2. Details\n\n{code}\n<log excerpt>\n{code}",
         ...
     }
 }
@@ -102,9 +92,9 @@ PYEOF
 ### Pre-create checklist
 
 - [ ] Summary plain text, under 255 chars, no markup
-- [ ] Description uses chosen Jira dialect (Markdown / Wiki / ADF) consistently
-- [ ] `##` or `h2.` sections with blank lines
-- [ ] Logs/commands in Jira code blocks
+- [ ] Description is **Wiki Markup only** (`h2.`, `*`, `{code}`) — no Markdown/ADF as source
+- [ ] `h2.` / `h3.` sections with blank lines
+- [ ] Logs/commands in `{code}` / `{noformat}`
 - [ ] Payload valid for MCP schema or REST JSON
 - [ ] No secrets, no agent/Cursor meta references
 
@@ -185,7 +175,7 @@ Bei fehlenden Credentials oder Auth-Fehler: User informieren, **nicht** ohne Aut
 | Feld | Field ID | Format | Beispiel |
 |------|----------|--------|----------|
 | Summary | `summary` | string, max ~255 Zeichen | `dbamq08.pd.tp.nil - FS corruption alert` |
-| Description | `description` | string (Jira Markdown/Wiki) oder ADF via MCP | Detaillierte Beschreibung |
+| Description | `description` | string (**Jira Wiki Markup**) | Detaillierte Beschreibung |
 | Environment | `customfield_12929` | multiselect (array) | `[{"id": "13339"}]` = Productive |
 | Platform | `customfield_12930` | select | `{"id": "13345"}` = Transporeon |
 | Component/s | `components` | array | `[{"id": "20471"}]` = Storage |
@@ -274,7 +264,7 @@ Bei **Cancel**: Kurz bestätigen, dass kein Ticket erstellt wurde.
 
 ### Phase 5: Ticket erstellen (nur nach Bestätigung)
 
-**Formatierung:** Siehe **Content formatting — Jira** — gilt für **MCP und REST** gleichermaßen. Summary plain text; Description als Jira Markdown / Wiki / ADF; Payload via `json.dumps` oder MCP-JSON-Args.
+**Formatierung:** Siehe **Content formatting — Jira** — gilt für **MCP und REST** gleichermaßen. Summary plain text; Description **immer Jira Wiki Markup**; Payload via `json.dumps` oder MCP-JSON-Args.
 
 **Service Desk API** (bevorzugt für Request Types):
 
@@ -370,28 +360,30 @@ Bei Abbruch:
 5. **Steps taken**: Was wurde bereits unternommen (falls aus Kontext bekannt)
 6. **Expected outcome**: Was soll das Ticket erreichen?
 
-**Template:**
+**Template (Wiki Markup):**
 
-```markdown
-## Problem
+```text
+h2. Problem
 <what is wrong or what is requested>
 
-## Affected Systems
-- Host: <hostname>
-- Environment: <env>
-- Service: <service>
+h2. Affected Systems
+* Host: <hostname>
+* Environment: <env>
+* Service: <service>
 
-## Details
+h2. Details
+{code}
 <error messages, logs, timestamps>
+{code}
 
-## Impact
+h2. Impact
 <business/operational impact>
 
-## Steps Already Taken
-- <step 1>
-- <step 2>
+h2. Steps Already Taken
+* <step 1>
+* <step 2>
 
-## Expected Outcome
+h2. Expected Outcome
 <what resolution is needed>
 ```
 

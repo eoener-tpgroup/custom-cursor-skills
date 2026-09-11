@@ -160,7 +160,7 @@ These rules appear across the command definitions and should be treated as hard 
 2. **Ask before mutating** — commits, pushes, MR/PR creation, Jira writes, and applying review fixes require an explicit confirmation (`AskQuestion`) with a visible draft/plan.
 3. **Do not guess required IDs** — missing MR IDs, ticket keys, FQDNs, or system types → ask or abort with the documented usage message.
 4. **No secrets** — never print tokens, commit credentials, or put passwords/API keys into tickets or MR comments.
-5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; Jira Markdown / Wiki / ADF for Jira — never mix dialects or paste the wrong platform’s markup.
+5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; **Jira Wiki Markup** for Jira create/comment — never Markdown/GFM/ADF as the authoring dialect for those commands.
 6. **Git safety** — no `git config` changes, no force-push to `main`/`master`, no skipping hooks, no destructive git without an explicit user request.
 7. **Remote analysis is read-only** — `/remote-analyze` and `/postgres-optimize` must never write, restart services, or run DDL/DML on the remote host.
 
@@ -278,8 +278,8 @@ Creates a new ticket in Jira Service Desk project **PITOPS** (default request ty
 | | |
 |--|--|
 | **Can do** | Build summary + description from prompt or chat; collect required fields (request type, environment, platform, component); show draft; create via MCP or Service Desk / REST after confirmation |
-| **Cannot do** | Create without confirmation; fill required fields by guessing; put secrets in the ticket; use GitHub/GitLab-only Markdown that Jira won’t render |
-| **Guidelines** | Ticket content always English; summary plain text ≤~255 chars; description in one Jira dialect (Markdown / Wiki / ADF); professional tone without agent/meta chatter |
+| **Cannot do** | Create without confirmation; fill required fields by guessing; put secrets in the ticket; use Markdown/GFM instead of Wiki Markup |
+| **Guidelines** | Ticket content always English; summary plain text ≤~255 chars; description always **Jira Wiki Markup**; professional tone without agent/meta chatter |
 
 **Usage examples**
 
@@ -299,7 +299,7 @@ Posts a comment on an existing Jira ticket.
 |--|--|
 | **Can do** | Require and normalize ticket key; draft comment from prompt or chat; verify ticket exists; post via MCP or REST after confirmation |
 | **Cannot do** | Run without a valid `PROJECT-NUMBER` key; post without confirmation; include secrets or Cursor/agent meta commentary |
-| **Guidelines** | Comment body always English; Jira-compatible markup only; prefer investigation/status/fix templates |
+| **Guidelines** | Comment body always English; always **Jira Wiki Markup**; prefer investigation/status/fix templates |
 
 **Usage examples**
 
