@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Erstellt einen Git-Commit nach Conventional Commits. Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
+description: Erstellt einen Git-Commit nach Conventional Commits. Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf main/master/development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
 ---
 
 # Commit
@@ -102,7 +102,8 @@ git remote -v
 Nach `git remote -v` prüfen, ob **irgendeine** Remote-URL auf das Ansible-Repo zeigt:
 
 - SSH: `git@gitlab.office.transporeon.com:pitops/ansible.git` (auch ohne `.git`)
-- HTTPS: Host `gitlab.office.transporeon.com` und Pfad `…/pitops/ansible`
+- HTTPS: Host `gitlab.office.transporeon.com` und Pfad **endet** mit `/pitops/ansible` oder `/pitops/ansible.git` (kein Substring-Match auf z.B. `pitops/ansible-roles`)
+  - Beispiel: `https://gitlab.office.transporeon.com/pitops/ansible.git`
 
 Match → **Ansible-Modus** aktiv (Phase 2 Sonderregeln). Kein Match → normale Default-Branch-Logik.
 
@@ -120,28 +121,28 @@ Match → **Ansible-Modus** aktiv (Phase 2 Sonderregeln). Kein Match → normale
 
 #### Ansible-Modus (`pitops/ansible`)
 
-**Geschützte Branches** (niemals darauf committen): `development`, `integration`, `acceptance`, `production`.
+**Geschützte Branches** (niemals darauf committen): `main`, `master`, `development`, `integration`, `acceptance`, `production`.
 
-Diese Regel ist **nicht überschreibbar** — auch nicht durch explizite Anweisungen wie „commit on development“ / „commit on current branch“. Solche Anweisungen **ablehnen**, kurz erklären, und weiterhin einen Feature-Branch von `development` planen (oder abbrechen, wenn der User das wählt).
+Diese Regel ist **nicht überschreibbar** — auch nicht durch explizite Anweisungen wie „commit on development“ / „commit on current branch“ / „commit on main“. Solche Anweisungen **ablehnen**, kurz erklären, und weiterhin einen Feature-Branch von `development` planen (oder abbrechen, wenn der User das wählt). Die Standard-Regel „commit on current branch“ gilt **nicht** auf diesen geschützten Branches.
 
 | Situation | Aktion |
 |-----------|--------|
 | Auf `development` | Feature-Branch von `development` erstellen (User-Branchname oder abgeleitet) |
-| Auf `integration`, `acceptance` oder `production` | **AskQuestion** (siehe unten) — nicht automatisch wechseln |
+| Auf `main`, `master`, `integration`, `acceptance` oder `production` | **AskQuestion** (siehe unten) — nicht automatisch wechseln |
 | Auf anderem Branch (z.B. bestehender Feature-Branch) | Auf aktuellem Branch committen, sofern nicht geschützt |
 | Detached HEAD | User fragen, wie fortzufahren |
 | User fordert Commit auf geschütztem Branch | Ablehnen; Feature-Branch von `development` anbieten |
 
-**AskQuestion** wenn aktuell auf `integration` / `acceptance` / `production`:
+**AskQuestion** wenn aktuell auf `main` / `master` / `integration` / `acceptance` / `production`:
 
 > Current branch `<branch>` is protected in pitops/ansible. How to proceed?
 
 Optionen:
 
-1. **Branch from development** — uncommitted Changes behalten, `development` aktualisieren/auschecken soweit nötig, Feature-Branch von `development` anlegen, dann Commit-Plan fortsetzen
+1. **Branch from development** — uncommitted Changes nach Möglichkeit behalten (siehe Dirty-Worktree-Ablauf unten), Feature-Branch von `development` anlegen, dann Commit-Plan fortsetzen
 2. **Cancel** — nichts ändern
 
-**Feature-Branch-Basis in Ansible-Modus:** immer von `development` (lokal syncen falls nötig: `git fetch origin development`, dann von `origin/development` bzw. lokalem `development` branchen — nicht von `integration`/`acceptance`/`production`).
+**Feature-Branch-Basis in Ansible-Modus:** immer von `development` (lokal syncen falls nötig: `git fetch origin development`, dann von `origin/development` bzw. lokalem `development` branchen — nicht von `main`/`master`/`integration`/`acceptance`/`production`).
 
 **Feature-Branch erstellen** (Standard: nur auf Default-Branch; Ansible: auf jedem geschützten Branch bzw. wenn neuer Branch geplant):
 
@@ -157,8 +158,19 @@ git checkout -b <branch-name>
 
 # Ansible (explizit von development):
 git fetch origin development
+# If origin/development missing after fetch → abort and inform user
+# If local branch <branch-name> already exists → AskQuestion: choose another name or cancel
 git checkout -b <branch-name> origin/development
 ```
+
+**Dirty-Worktree-Ablauf (Ansible, Branch von `development`):**
+
+Änderungen, die relativ zu `integration` / `acceptance` / `production` / `main` / `master` entstanden sind, passen oft **nicht** sauber auf `development`. Keine destruktiven Resets.
+
+1. Zuerst mit uncommitted Changes versuchen: `git checkout -b <branch-name> origin/development`
+2. Schlägt Checkout fehl (würde lokale Änderungen überschreiben) → `git stash push -u -m "pre-ansible-feature-branch"`, dann erneut `git checkout -b <branch-name> origin/development`, dann `git stash pop`
+3. Bei Stash-Pop-Konflikten → **abbrechen**, User informieren, nichts committen; Stash belassen bis der User entscheidet
+4. Kurz im Plan erwähnen, dass der Diff ggf. gegen eine andere Env-Basis entstanden ist
 
 ### Phase 3: Änderungen planen (noch nicht stagen)
 
@@ -327,7 +339,10 @@ EOF
 | Merge-Konflikte | Nicht committen; User informieren |
 | Secrets in Diff | Nicht committen; Dateien warnen |
 | Ansible: Commit auf geschütztem Branch verlangt | Ablehnen; Feature-Branch von `development` anbieten oder abbrechen |
-| Ansible: auf integration/acceptance/production | AskQuestion — von development branchen oder Cancel |
+| Ansible: auf main/master/integration/acceptance/production | AskQuestion — von development branchen oder Cancel |
+| Ansible: `origin/development` fehlt nach fetch | Abbrechen; User informieren |
+| Ansible: Feature-Branch-Name existiert bereits | AskQuestion — anderen Namen wählen oder Cancel |
+| Ansible: Checkout/stash-pop Konflikt beim Branch von development | Abbrechen; User informieren; keinen Commit |
 
 ## Verwandte Commands
 
