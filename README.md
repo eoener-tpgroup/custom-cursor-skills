@@ -197,7 +197,7 @@ Pushes the current feature branch and creates a GitHub Pull Request or GitLab Me
 |--|--|
 | **Can do** | Detect GitHub vs GitLab from **origin URL**; draft title + Summary / Changes / Test plan; push with `-u`; create PR/MR via `gh`, `glab`, or GitLab MCP; return the MR/PR URL |
 | **Cannot do** | Run from the default branch; push/create without confirmation; force-push; invent fake test steps; use Jira markup in the MR/PR body |
-| **Guidelines** | Title = plain text (no Markdown); description = platform Markdown only; confirm plan before push; if MR already exists, return existing URL; origin URL decides the forge (`github.com` / GHE → GitHub; hostname contains `gitlab` → GitLab; otherwise ask/abort). Chat and written Markdown follow that platform (PR/`#` vs MR/`!`). |
+| **Guidelines** | Title = plain text (no Markdown); description = platform Markdown only; confirm plan before push; if PR/MR already exists, return existing URL; origin URL decides the forge (`github.com` / GHE → GitHub; hostname contains `gitlab` → GitLab; otherwise ask/abort). Chat and written Markdown follow that platform (PR/`#` vs MR/`!`). |
 
 **Usage examples**
 
@@ -217,7 +217,7 @@ Runs an intensive, structured code review of an MR/PR, including existing discus
 | | |
 |--|--|
 | **Can do** | Detect forge from origin URL; resolve MR/PR ID from args (`#42` / `!42`), chat, or current branch; load diffs, commits, CI, approvals, and **all** comments via `gh`, `glab`, or GitLab MCP; multi-pass review (architecture, quality, security/perf/tests); severity classification; English report in chat |
-| **Cannot do** | Auto-post the review as an MR comment (only on explicit request); implement fixes (use `/merge-request-fix`); proceed without a resolvable MR ID |
+| **Cannot do** | Auto-post the review as an MR/PR comment (only on explicit request); implement fixes (use `/merge-request-fix`); proceed without a resolvable MR ID |
 | **Guidelines** | Cite `file:line`; avoid duplicating open discussion; Critical first; constructive positives; chat report ≠ implementation |
 
 **Usage examples**

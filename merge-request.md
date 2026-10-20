@@ -238,7 +238,7 @@ git diff origin/<target-branch>..HEAD --stat
 **Nicht automatisch pushen oder MR/PR erstellen** — erst nach expliziter Bestätigung.
 
 ```markdown
-## Merge request plan
+## PR/MR plan
 
 | Field | Value |
 |-------|-------|
@@ -262,11 +262,11 @@ git diff origin/<target-branch>..HEAD --stat
 
 **AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung):
 
-> Proceed with push and merge request creation?
+> Proceed with push and PR/MR creation?
 
 Optionen:
 
-1. **Yes, push and create MR** — Push und MR/PR mit obigem Titel und Beschreibung erstellen
+1. **Yes, push and create PR/MR** — Push und PR/MR mit obigem Titel und Beschreibung erstellen
 2. **Edit first** — User gibt Korrekturen; Entwurf anpassen, erneut bestätigen
 3. **Cancel** — Nichts pushen, keinen MR/PR erstellen
 
@@ -314,7 +314,7 @@ EOF
 - Branch-Name und Target-Branch
 - Anzahl Commits und geänderte Dateien
 - Pipeline/CI-Status, falls abrufbar
-- Hinweis: `/merge-request-review [id] [focus]` für Code Review, `/merge-request-fix [id] [instructions]` für Review-Fixes
+- Hinweis: `/merge-request-review [id] [focus]` für Code Review, `/merge-request-fix [id] [instructions]` für Review-Fixes — ID als `#<n>` auf GitHub, `!<n>` auf GitLab
 
 ---
 

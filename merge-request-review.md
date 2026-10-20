@@ -173,7 +173,8 @@ Then load data via the matching subsection below (**GitLab** or **GitHub**).
 ```bash
 glab mr view <id>
 glab mr diff <id>
-glab mr note list <id>
+glab mr view <id> --comments
+glab api projects/:id/merge_requests/<id>/discussions
 ```
 
 **Via MCP — Daten laden:**
@@ -191,6 +192,13 @@ glab mr note list <id>
 | MR-Approvals | Bereits erteilte Approvals und Review-States |
 
 **GitLab — Kommentare laden (Pflicht):**
+
+Via **`glab`** (wenn als Client gewählt):
+
+1. `glab mr view <id> --comments` — schneller Überblick über Notes
+2. `glab api projects/:id/merge_requests/<id>/discussions` — vollständige Threads inkl. resolved/unresolved und Inline-Positionen
+
+Via **GitLab MCP** (wenn als Client gewählt):
 
 1. Tool-Schema via `GetDynamicTools` prüfen (z.B. `get_merge_request_notes`, `list_merge_request_discussions`, `get_merge_request`)
 2. **Alle** Diskussionen und Notes laden — inkl.:

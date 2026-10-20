@@ -166,7 +166,8 @@ Then load data via the matching subsection below (**GitLab** or **GitHub**).
 ```bash
 glab mr view <id>
 glab mr diff <id>
-glab mr note list <id>
+glab mr view <id> --comments
+glab api projects/:id/merge_requests/<id>/discussions
 ```
 
 **Via MCP — Daten laden:**
@@ -183,6 +184,13 @@ glab mr note list <id>
 | MR-Approvals | Review-States (`CHANGES_REQUESTED`, etc.) |
 
 **GitLab — Kommentare laden (Pflicht):**
+
+Via **`glab`** (wenn als Client gewählt):
+
+1. `glab mr view <id> --comments` — schneller Überblick über Notes
+2. `glab api projects/:id/merge_requests/<id>/discussions` — vollständige Threads inkl. resolved/unresolved und Inline-Positionen
+
+Via **GitLab MCP** (wenn als Client gewählt):
 
 1. Tool-Schema via `GetDynamicTools` prüfen (z.B. `list_merge_request_discussions`, `get_merge_request_notes`, `get_merge_request`)
 2. **Alle** Diskussionen und Notes laden — inkl.:
@@ -576,11 +584,11 @@ Optionen:
 
 1. **Summary only** — Fixes bleiben lokal uncommitted, nichts posten
 2. **Commit** — Commit mit obiger Message erstellen
-3. **Commit + push** — Commit und `git push` auf MR-Branch
-4. **Commit + push + MR comment** — Zusätzlich obigen MR-Kommentar posten
-5. **Edit texts first** — User passt Commit-Message oder MR-Kommentar an; erneut bestätigen
+3. **Commit + push** — Commit und `git push` auf PR/MR-Branch
+4. **Commit + push + PR/MR comment** — Zusätzlich obigen PR/MR-Kommentar posten
+5. **Edit texts first** — User passt Commit-Message oder PR/MR-Kommentar an; erneut bestätigen
 
-Bei **Commit** / **Commit + push** / **Commit + push + MR comment**:
+Bei **Commit** / **Commit + push** / **Commit + push + PR/MR comment**:
 
 - Git Safety Protocol einhalten (siehe `/commit`)
 - Commit-Message referenziert MR-ID und kurz die Hauptfixes
