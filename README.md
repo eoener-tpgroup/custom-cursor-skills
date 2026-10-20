@@ -160,7 +160,7 @@ These rules appear across the command definitions and should be treated as hard 
 2. **Ask before mutating** — commits, pushes, MR/PR creation, Jira writes, and applying review fixes require an explicit confirmation (`AskQuestion`) with a visible draft/plan.
 3. **Do not guess required IDs** — missing MR IDs, ticket keys, FQDNs, or system types → ask or abort with the documented usage message.
 4. **No secrets** — never print tokens, commit credentials, or put passwords/API keys into tickets or MR comments.
-5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; **Jira Wiki Markup** for Jira create/comment — never Markdown/GFM/ADF as the authoring dialect for those commands.
+5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; **Jira Wiki Markup** for Jira create/comment — never Markdown/GFM/ADF as the authoring dialect for those commands. For `/merge-request`, `/merge-request-review`, and `/merge-request-fix`, the forge comes from the **origin URL** (not from which CLI happens to be installed).
 6. **Git safety** — no `git config` changes, no force-push to `main`/`master`, no skipping hooks, no destructive git without an explicit user request.
 7. **Remote analysis is read-only** — `/remote-analyze` and `/postgres-optimize` must never write, restart services, or run DDL/DML on the remote host.
 
@@ -195,9 +195,9 @@ Pushes the current feature branch and creates a GitHub Pull Request or GitLab Me
 
 | | |
 |--|--|
-| **Can do** | Detect GitHub vs GitLab; draft title + Summary / Changes / Test plan; push with `-u`; create PR/MR via `gh`, `glab`, or GitLab MCP; return the MR/PR URL |
+| **Can do** | Detect GitHub vs GitLab from **origin URL**; draft title + Summary / Changes / Test plan; push with `-u`; create PR/MR via `gh`, `glab`, or GitLab MCP; return the MR/PR URL |
 | **Cannot do** | Run from the default branch; push/create without confirmation; force-push; invent fake test steps; use Jira markup in the MR/PR body |
-| **Guidelines** | Title = plain text (no Markdown); description = platform Markdown only; confirm plan before push; if MR already exists, return existing URL |
+| **Guidelines** | Title = plain text (no Markdown); description = platform Markdown only; confirm plan before push; if MR already exists, return existing URL; origin URL decides the forge (`github.com` / GHE → GitHub; hostname contains `gitlab` → GitLab; otherwise ask/abort). Chat and written Markdown follow that platform (PR/`#` vs MR/`!`). |
 
 **Usage examples**
 
@@ -216,7 +216,7 @@ Runs an intensive, structured code review of an MR/PR, including existing discus
 
 | | |
 |--|--|
-| **Can do** | Resolve MR ID from args, chat, or current branch; load diffs, commits, CI, approvals, and **all** comments; multi-pass review (architecture, quality, security/perf/tests); severity classification; English report in chat |
+| **Can do** | Detect forge from origin URL; resolve MR/PR ID from args (`#42` / `!42`), chat, or current branch; load diffs, commits, CI, approvals, and **all** comments via `gh`, `glab`, or GitLab MCP; multi-pass review (architecture, quality, security/perf/tests); severity classification; English report in chat |
 | **Cannot do** | Auto-post the review as an MR comment (only on explicit request); implement fixes (use `/merge-request-fix`); proceed without a resolvable MR ID |
 | **Guidelines** | Cite `file:line`; avoid duplicating open discussion; Critical first; constructive positives; chat report ≠ implementation |
 
@@ -237,7 +237,7 @@ Reads open review comments, plans minimal fixes, applies them after confirmation
 
 | | |
 |--|--|
-| **Can do** | Load all review threads; triage actionable vs skip/invalid; show fix plan; apply focused code changes; produce requested→fixed summary; optional commit/push/MR reply after a **second** confirmation |
+| **Can do** | Detect forge from origin URL; load all review threads via `gh`, `glab`, or GitLab MCP; triage actionable vs skip/invalid; show fix plan; apply focused code changes; produce requested→fixed summary; optional commit/push/MR or PR reply after a **second** confirmation |
 | **Cannot do** | Apply fixes or commit/push/post without confirmation; blindly follow wrong or conflicting feedback; change CI only to force green; force-push |
 | **Guidelines** | Review comments are source of truth; minimal scope; validate before applying; every comment appears in the summary with status |
 
