@@ -183,17 +183,24 @@ git fetch origin
 git log origin/<default-branch>..HEAD --oneline
 ```
 
-### Phase 3: Remote-Plattform erkennen
+### Phase 3: Remote-Plattform erkennen (origin URL first)
 
-| Plattform | Erkennung | CLI / Tool |
-|-----------|-----------|------------|
-| **GitHub** | `gh` verfügbar + `gh auth status` OK, oder Remote-URL enthält `github.com` | `gh` CLI |
-| **GitLab** | Remote-URL enthält `gitlab`, oder GitLab MCP authentifiziert | `glab` CLI oder GitLab MCP |
-| **Unbekannt** | — | Generic `git push` + manuelle MR/PR-URL an User |
+**Order is mandatory:** resolve the remote URL **before** choosing a client or drafting body text.
 
-Priorität: `gh` für GitHub, `glab` für GitLab, GitLab MCP als Fallback.
+1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
+2. Classify from the URL only:
 
-**Nach Erkennung:** Alle Title-/Description-Texte ausschließlich im Dialekt der erkannten Plattform schreiben (siehe **Content formatting — GitLab or GitHub**). Bei unbekanntem Remote: gemeinsames Markdown-Subset + manuelle MR-URL — kein Jira-Markup.
+| Plattform | Erkennung (URL only) | Client danach |
+|-----------|----------------------|---------------|
+| **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
+| **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
+| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
+
+**Wichtig:** Verfügbarkeit von `gh`, `glab` oder GitLab MCP **darf die Plattform nicht überschreiben**. Erst URL → Plattform, dann Client.
+
+**GitLab Client-Wahl:** Was verfügbar und authentifiziert ist. Wenn **beides** geht → **`glab` bevorzugen**; sonst GitLab MCP. Beide nicht nötig.
+
+**Nach Erkennung:** Alle Title-/Description-Texte und Chat-Labels ausschließlich im Dialekt der erkannten Plattform (siehe **Content formatting**). GitHub → „Pull Request“, `#n`, GFM. GitLab → „Merge Request“, `!n`, GitLab Flavored Markdown.
 
 ### Phase 4: MR/PR-Entwurf erstellen
 
@@ -301,10 +308,6 @@ EOF
 2. Bei `needsAuth`: User bitten zu authentifizieren
 3. Verfügbare MCP-Tools für MR-Erstellung nutzen — `title` plain text, `description` als **GitLab Flavored Markdown** (siehe Content formatting)
 
-#### Fallback
-
-Nach Push Remote-URL und Branch ausgeben für manuelle MR-Erstellung.
-
 ### Phase 8: Ergebnis melden
 
 - **URL** des erstellten MR/PR
@@ -328,7 +331,9 @@ Nach Push Remote-URL und Branch ausgeben für manuelle MR-Erstellung.
 |---------|--------|
 | Auf Default-Branch | Abbrechen, `/commit` empfehlen |
 | Push rejected | Fehler zeigen, kein Force-Push |
-| `gh`/`glab` nicht installiert | Push durchführen, manuelle MR-Erstellung verlinken |
+| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten |
+| GitHub ohne `gh` Auth | Abbrechen, `gh auth login` anleiten |
+| GitLab ohne `glab` und ohne MCP | Abbrechen, CLI- oder MCP-Setup anleiten |
 | Auth fehlgeschlagen | User informieren |
 | MR/PR existiert bereits | Bestehende URL zurückgeben |
 | User bricht Bestätigung ab | Nichts pushen, keinen MR/PR erstellen |
