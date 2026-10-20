@@ -216,9 +216,9 @@ Runs an intensive, structured code review of an MR/PR, including existing discus
 
 | | |
 |--|--|
-| **Can do** | Detect forge from origin URL; resolve MR/PR ID from args (`#42` / `!42`), chat, or current branch; load diffs, commits, CI, approvals, and **all** comments via `gh`, `glab`, or GitLab MCP; multi-pass review (architecture, quality, security/perf/tests); severity classification; English report in chat |
+| **Can do** | Detect forge from origin URL; resolve MR/PR ID from args (`#42` / `!42`), chat, or current branch; load diffs, commits, CI, approvals, and **all** comments via `gh`, `glab`, or GitLab MCP; multi-pass review (architecture, quality, security/perf/tests); severity classification; English report in chat; on explicit post request prefer **inline line comments**, with GitHub **`suggestion` fences** when a line-level fix is clear |
 | **Cannot do** | Auto-post the review as an MR/PR comment (only on explicit request); implement fixes (use `/merge-request-fix`); proceed without a resolvable MR ID |
-| **Guidelines** | Cite `file:line`; avoid duplicating open discussion; Critical first; constructive positives; chat report ≠ implementation |
+| **Guidelines** | Cite `file:line`; avoid duplicating open discussion; Critical first; constructive positives; chat report ≠ implementation; when posting on GitHub prefer inline comments + suggestions over a single top-level dump |
 
 **Usage examples**
 
@@ -237,9 +237,9 @@ Reads open review comments, plans minimal fixes, applies them after confirmation
 
 | | |
 |--|--|
-| **Can do** | Detect forge from origin URL; load all review threads via `gh`, `glab`, or GitLab MCP; triage actionable vs skip/invalid; show fix plan; apply focused code changes; produce requested→fixed summary; optional commit/push/MR or PR reply after a **second** confirmation |
+| **Can do** | Detect forge from origin URL; load all review threads via `gh`, `glab`, or GitLab MCP; triage actionable vs skip/invalid; show fix plan; apply focused code changes; produce requested→fixed summary; optional commit/push/MR or PR reply after a **second** confirmation; on GitHub after that reply **resolve review threads** for ✅ Fixed findings |
 | **Cannot do** | Apply fixes or commit/push/post without confirmation; blindly follow wrong or conflicting feedback; change CI only to force green; force-push |
-| **Guidelines** | Review comments are source of truth; minimal scope; validate before applying; every comment appears in the summary with status |
+| **Guidelines** | Review comments are source of truth; minimal scope; validate before applying; every comment appears in the summary with status; GitHub Option 4: resolve implemented threads, leave skipped/open ones unresolved |
 
 **Usage examples**
 

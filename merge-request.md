@@ -237,14 +237,15 @@ git diff origin/<target-branch>..HEAD --stat
 
 **Do not automatically push or create MR/PR** — only after explicit confirmation.
 
-Use the heading that matches Phase 3: **`## Pull request plan`** on GitHub, **`## Merge request plan`** on GitLab (do not keep a neutral `PR/MR` heading after detection).
+Output **exactly one** skeleton below — match Phase 3 (do not keep a neutral `PR/MR` heading after detection).
 
 ```markdown
-## Pull request plan   <!-- or: ## Merge request plan -->
+<!-- GitHub skeleton -->
+## Pull request plan
 
 | Field | Value |
 |-------|-------|
-| Platform | GitHub / GitLab |
+| Platform | GitHub |
 | Source branch | `<current-branch>` |
 | Target branch | `<target-branch>` |
 | Commits | `<n>` |
@@ -255,11 +256,35 @@ Use the heading that matches Phase 3: **`## Pull request plan`** on GitHub, **`#
 `<title>`
 
 ### Description
-<full PR or MR body — Summary, Changes, Test plan>
+<full PR body — Summary, Changes, Test plan>
 
 ### Actions
 1. `git push -u origin HEAD`
-2. Create PR via `gh` **or** MR via `glab`/MCP
+2. Create PR via `gh`
+```
+
+```markdown
+<!-- GitLab skeleton -->
+## Merge request plan
+
+| Field | Value |
+|-------|-------|
+| Platform | GitLab |
+| Source branch | `<current-branch>` |
+| Target branch | `<target-branch>` |
+| Commits | `<n>` |
+| Changed files | `<n>` (+/- lines) |
+| Draft | yes / no |
+
+### Title
+`<title>`
+
+### Description
+<full MR body — Summary, Changes, Test plan>
+
+### Actions
+1. `git push -u origin HEAD`
+2. Create MR via `glab` or GitLab MCP
 ```
 
 **AskQuestion** (required — no fallback to implicit continuation) — wording matches platform:
