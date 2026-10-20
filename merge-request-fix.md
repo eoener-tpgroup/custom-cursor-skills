@@ -145,7 +145,7 @@ EOF
 
 | Plattform | Erkennung (URL only) | Client danach |
 |-----------|----------------------|---------------|
-| **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
+| **GitHub** | URL enthält `github.com`, oder Hostname enthält `github` (z.B. `github.mycompany.com`) | `gh` CLI — danach `gh auth status` prüfen |
 | **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
 | **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
 
@@ -167,7 +167,9 @@ Then load data via the matching subsection below (**GitLab** or **GitHub**).
 glab mr view <id>
 glab mr diff <id>
 glab mr view <id> --comments
-glab api projects/:id/merge_requests/<id>/discussions
+# Resolve project path, then load discussions (URL-encode namespace/project)
+PROJECT=$(glab repo view -F json | jq -r .path_with_namespace | jq -sRr @uri)
+glab api "projects/${PROJECT}/merge_requests/<id>/discussions"
 ```
 
 **Via MCP — Daten laden:**
@@ -188,7 +190,7 @@ glab api projects/:id/merge_requests/<id>/discussions
 Via **`glab`** (wenn als Client gewählt):
 
 1. `glab mr view <id> --comments` — schneller Überblick über Notes
-2. `glab api projects/:id/merge_requests/<id>/discussions` — vollständige Threads inkl. resolved/unresolved und Inline-Positionen
+2. Resolve/encode project path, then `glab api "projects/${PROJECT}/merge_requests/<id>/discussions"` — vollständige Threads inkl. resolved/unresolved und Inline-Positionen (`PROJECT=$(glab repo view -F json | jq -r .path_with_namespace | jq -sRr @uri)`)
 
 Via **GitLab MCP** (wenn als Client gewählt):
 

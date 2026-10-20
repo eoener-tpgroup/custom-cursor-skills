@@ -192,7 +192,7 @@ git log origin/<default-branch>..HEAD --oneline
 
 | Plattform | Erkennung (URL only) | Client danach |
 |-----------|----------------------|---------------|
-| **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
+| **GitHub** | URL enthält `github.com`, oder Hostname enthält `github` (z.B. `github.mycompany.com`) | `gh` CLI — danach `gh auth status` prüfen |
 | **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
 | **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
 
@@ -237,8 +237,10 @@ git diff origin/<target-branch>..HEAD --stat
 
 **Nicht automatisch pushen oder MR/PR erstellen** — erst nach expliziter Bestätigung.
 
+Use the heading that matches Phase 3: **`## Pull request plan`** on GitHub, **`## Merge request plan`** on GitLab (do not keep a neutral `PR/MR` heading after detection).
+
 ```markdown
-## PR/MR plan
+## Pull request plan   <!-- or: ## Merge request plan -->
 
 | Field | Value |
 |-------|-------|
@@ -253,22 +255,23 @@ git diff origin/<target-branch>..HEAD --stat
 `<title>`
 
 ### Description
-<full MR/PR body — Summary, Changes, Test plan>
+<full PR or MR body — Summary, Changes, Test plan>
 
 ### Actions
 1. `git push -u origin HEAD`
-2. Create MR/PR via `<gh|glab|MCP>`
+2. Create PR via `gh` **or** MR via `glab`/MCP
 ```
 
-**AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung):
+**AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung) — wording matches platform:
 
-> Proceed with push and PR/MR creation?
+> Proceed with push and pull request creation?  
+> *(GitLab: “Proceed with push and merge request creation?”)*
 
 Optionen:
 
-1. **Yes, push and create PR/MR** — Push und PR/MR mit obigem Titel und Beschreibung erstellen
+1. **Yes, push and create PR** *(GitLab: create MR)* — Push und PR/MR mit obigem Titel und Beschreibung erstellen
 2. **Edit first** — User gibt Korrekturen; Entwurf anpassen, erneut bestätigen
-3. **Cancel** — Nichts pushen, keinen MR/PR erstellen
+3. **Cancel** — Nichts pushen, keinen PR/MR erstellen
 
 Bei **Cancel**: Kurz bestätigen, dass nichts gepusht oder erstellt wurde.
 
