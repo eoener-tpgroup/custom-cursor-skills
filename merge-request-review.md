@@ -145,13 +145,41 @@ EOF
 
 ### Phase 2: Plattform erkennen und MR-Daten laden
 
-**Formatting dialect:** Once GitLab vs GitHub is known, any optional MR/PR comment (Phase 8) uses that platform’s Markdown only (see **Content formatting — GitLab or GitHub**).
+**Order is mandatory:** resolve the remote URL **before** choosing a client or loading MR/PR data.
 
-#### GitLab (MCP bevorzugt)
+1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
+2. Classify from the URL only:
 
-1. GitLab MCP prüfen (`GetDynamicTools`, Namespace `GitLab`)
-2. Bei `needsAuth`: User bitten zu authentifizieren, **nicht** ohne Auth fortfahren
-3. Daten laden:
+| Plattform | Erkennung (URL only) | Client danach |
+|-----------|----------------------|---------------|
+| **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
+| **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
+| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung |
+
+**Wichtig:** Verfügbarkeit von `gh`, `glab` oder GitLab MCP **darf die Plattform nicht überschreiben**. Erst URL → Plattform, dann Client.
+
+**GitLab Client-Wahl:** Was verfügbar und authentifiziert ist. Wenn **beides** geht → **`glab` bevorzugen**; sonst GitLab MCP. Beide nicht nötig.
+
+**Nach Erkennung:** Chat review title and refs use the detected platform only — GitHub → `Code Review: PR #<id>`, `#n`; GitLab → `Code Review: MR !<id>`, `!n` (Phase 7). Optional posts (Phase 8) use that platform’s Markdown only (see **Content formatting — GitLab or GitHub**).
+
+Then load data via the matching subsection below (**GitLab** or **GitHub**).
+
+#### GitLab (via `glab` or MCP)
+
+**Client:** Prefer **`glab`** when both `glab` and GitLab MCP are available and authenticated; otherwise GitLab MCP. Tool discovery for MCP: `GetDynamicTools`, Namespace `GitLab`. Bei `needsAuth`: User bitten zu authentifizieren, **nicht** ohne Auth fortfahren.
+
+**Via `glab` — Daten laden:**
+
+```bash
+glab mr view <id>
+glab mr diff <id>
+glab mr note list <id>
+```
+
+**Via MCP — Daten laden:**
+
+1. Tool-Schema via `GetDynamicTools` prüfen (z.B. `get_merge_request`, `get_merge_request_notes`, `list_merge_request_discussions`)
+2. Entsprechende MCP-Tools aufrufen (gleiche Datentypen wie unten)
 
 | Daten | Zweck |
 |-------|-------|
@@ -261,8 +289,16 @@ Im Review-Bericht einen Abschnitt **„Bestehende MR-Diskussion"** einfügen:
 
 ### Phase 7: Review-Bericht
 
+**Chat title (strict — match detected platform):**
+
+- **GitHub:** `# Code Review: PR #<id> — <title>`
+- **GitLab:** `# Code Review: MR !<id> — <title>`
+
+Use `#id` / “Pull Request” wording in the GitHub report; `!id` / “Merge Request” on GitLab. Do not mix dialects in one report.
+
 ```markdown
-# Code Review: MR !<id> — <titel>
+# Code Review: PR #<id> — <title>   <!-- GitHub -->
+# Code Review: MR !<id> — <title>   <!-- GitLab -->
 
 ## Executive Summary
 <2-4 Sätze + Merge-Empfehlung>
@@ -309,9 +345,9 @@ Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post 
 1. Kommentar für die Plattform formatieren — **Content formatting — GitLab or GitHub** (GitHub GFM bzw. GitLab Flavored Markdown; gilt für MCP, CLI und REST)
 2. Bereits bestehende Kommentare referenzieren statt duplizieren
 3. Review-Empfehlung (Approve / Request changes) klar angeben
-4. Posten:
-   - **GitLab**: `create_workitem_note` (MCP) oder `glab mr note <id> -m "..."` — **GitLab Flavored Markdown**
-   - **GitHub**: `gh pr comment <id> --body "..."` oder `gh pr review <id> --comment -b "..."` — **GitHub GFM**
+4. Posten (platform dialect — GitLab `!id` / MR wording, GitHub `#id` / PR wording in cross-refs):
+   - **GitLab**: `glab mr note <id> -m "..."` or MCP note tool — **GitLab Flavored Markdown**
+   - **GitHub**: `gh pr comment <id> --body-file ...` or `gh pr review <id> --comment -b "..."` — **GitHub GFM**
 5. Erfolg bestätigen und **URL des Kommentars** zurückgeben
 
 **Kommentar-Template** (für MR-Posting — English, no automation markers):
@@ -354,9 +390,12 @@ Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post 
 |---------|--------|
 | Keine MR-ID ermittelbar | AskQuestion oder abbrechen (siehe oben) |
 | Mehrere MRs im Kontext | User fragen, welcher MR gemeint ist |
-| MR nicht gefunden | ID und Projekt prüfen |
+| MR/PR nicht gefunden | ID und Projekt prüfen |
+| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten |
+| GitHub ohne `gh` Auth | Abbrechen, `gh auth login` anleiten |
+| GitLab ohne `glab` und ohne MCP | Abbrechen, CLI- oder MCP-Setup anleiten |
 | MCP nicht authentifiziert | Auth anleiten, abbrechen |
-| MR >500 Zeilen Diff | Modulweise Review, Split empfehlen |
+| MR/PR >500 Zeilen Diff | Modulweise Review, Split empfehlen |
 
 ## Verwandte Commands
 
