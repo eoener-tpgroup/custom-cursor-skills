@@ -1,37 +1,37 @@
 ---
 name: merge-request
-description: Pusht den aktuellen Branch und erstellt einen Merge Request (GitLab) oder Pull Request (GitHub). Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Push/MR via AskQuestion.
+description: Pushes the current branch and creates a Merge Request (GitLab) or Pull Request (GitHub). Optional instructions or chat context. Confirmation before push/MR via AskQuestion.
 ---
 
 # Merge Request
 
-Pusht den aktuellen Feature-Branch und erstellt einen Merge/Pull Request gegen den Default-Branch.
-Wird manuell via `/merge-request [instructions]` ausgelöst.
+Pushes the current feature branch and creates a Merge/Pull Request against the default branch.
+Triggered manually via `/merge-request [instructions]`.
 
-## ⚙️ Optionale Argumente & Kontext
+## ⚙️ Optional arguments & context
 
-Alles **nach** `/merge-request` im User-Prompt ist optionaler Freitext (`[instructions]`). Er kann Leerzeichen enthalten.
+Everything **after** `/merge-request` in the user prompt is optional free text (`[instructions]`). It may contain spaces.
 
-**Zwei Quellen** (Priorität):
+**Two sources** (priority):
 
-| Priorität | Quelle | Wann |
-|-----------|--------|------|
-| 1 | **Expliziter Text** nach `/merge-request` | User hat Anweisungen direkt angegeben |
-| 2 | **Chat-Kontext** | Kein expliziter Text — aus bisheriger Konversation ableiten |
+| Priority | Source | When |
+|----------|--------|------|
+| 1 | **Explicit text** after `/merge-request` | User provided instructions directly |
+| 2 | **Chat context** | No explicit text — infer from the conversation so far |
 
-**Typische Anweisungen** (explizit oder aus Kontext):
+**Typical instructions** (explicit or from context):
 
-- MR/PR-Titel oder Summary-Hinweise
-- Ziel-Branch (`target develop`, `base main`)
-- Testplan-Schwerpunkte oder Breaking-Change-Hinweise
-- Labels, Reviewer, Draft-Status (wenn Plattform/CLI es unterstützt)
-- „draft MR" / „ready for review"
+- MR/PR title or summary hints
+- Target branch (`target develop`, `base main`)
+- Test plan focus or breaking-change notes
+- Labels, reviewers, draft status (when platform/CLI supports it)
+- "draft MR" / "ready for review"
 
-**Aus Kontext ableiten — Regeln:**
+**Infer from context — rules:**
 
-1. Titel und Summary aus Commits, Diff und Chat ableiten — besprochene Änderungen und Ticket-Keys einbeziehen
-2. Keine fiktiven Testschritte erfinden — aus Diff und Kontext ableiten oder generisch halten
-3. Wenn Target-Branch unklar und nicht Default → **User fragen**
+1. Derive title and summary from commits, diff, and chat — include discussed changes and ticket keys
+2. Do not invent fictional test steps — derive from diff and context or keep generic
+3. If target branch is unclear and not the default → **ask the user**
 
 ```
 ✅ /merge-request
@@ -42,7 +42,7 @@ Alles **nach** `/merge-request` im User-Prompt ist optionaler Freitext (`[instru
 
 ## Output language
 
-**Always write all user-facing output in English** — status messages, summaries, MR/PR descriptions, error messages, and questions to the user. This applies even if the user writes in another language or this command definition is in German.
+**Always write all user-facing output in English** — status messages, summaries, MR/PR descriptions, error messages, and questions to the user. This command definition is also in English. The user may still write in another language; respond in English regardless.
 
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 
@@ -57,13 +57,13 @@ Never post Jira markup into an MR/PR. Never mix HTML into the body.
 
 ### Shared field rules
 
-| Feld | Regeln |
-|------|--------|
+| Field | Rules |
+|-------|-------|
 | **Title** | Plain text — **no** Markdown (`#`, `**`, lists). Short, imperative, max. ~72 chars when possible. No newlines |
 | **Description / Body** | Platform Flavored Markdown: `##` headings, `-` lists, `- [ ]` checkboxes in Test plan, `**bold**`, `` `inline` ``, fenced code with language tag |
-| **Struktur** | Blank line between sections; fixed order: Summary → Changes → Test plan |
+| **Structure** | Blank line between sections; fixed order: Summary → Changes → Test plan |
 | **Links** | Full URLs (`https://…`); platform-native issue/MR links when appropriate |
-| **Tabellen** | Only if needed; simple GFM/GitLab Markdown tables |
+| **Tables** | Only if needed; simple GFM/GitLab Markdown tables |
 
 ### Platform-specific Markdown
 
@@ -119,38 +119,38 @@ EOF
 - [ ] Payload valid for `gh` / `glab` / MCP schema / REST JSON
 - [ ] No Cursor-/agent meta references
 
-## Voraussetzungen
+## Prerequisites
 
-- Git-Repository mit konfiguriertem Remote (`origin` oder erkennbarer Primary-Remote)
-- Aktueller Branch ist **nicht** der Default-Branch
-- Es gibt mindestens einen Commit auf dem Branch, der noch nicht auf dem Default-Branch ist
-- Branch wurde vorher committed (→ `/commit` wenn nötig)
+- Git repository with configured remote (`origin` or recognizable primary remote)
+- Current branch is **not** the default branch
+- At least one commit on the branch that is not yet on the default branch
+- Branch was committed beforehand (→ `/commit` if needed)
 
-## Git Safety Protocol (strikt einhalten)
+## Git Safety Protocol (strict compliance)
 
-- **Niemals** `git config` ändern
-- **Niemals** Force-Push auf `main`/`master` — User warnen
-- **Niemals** `--force` ohne explizite User-Anfrage
-- **Niemals** Hooks überspringen
+- **Never** change `git config`
+- **Never** force-push to `main`/`master` — warn the user
+- **Never** use `--force` without explicit user request
+- **Never** skip hooks
 
 ---
 
 ## Workflow
 
-### Phase 0: Anweisungen & Kontext auswerten
+### Phase 0: Evaluate instructions & context
 
-1. Text nach `/merge-request` extrahieren — falls vorhanden, als **explizite Anweisungen** behandeln
-2. Falls leer: **Chat-Kontext** auf MR-relevante Hinweise prüfen (Feature-Beschreibung, Ticket-Keys, Testhinweise, Breaking Changes)
-3. Anweisungen in konkrete Entscheidungen übersetzen:
-   - MR/PR-Titel
-   - Summary / Changes / Test plan Inhalte
-   - Target-Branch (falls abweichend vom Default)
+1. Extract text after `/merge-request` — if present, treat as **explicit instructions**
+2. If empty: scan **chat context** for MR-relevant hints (feature description, ticket keys, test notes, breaking changes)
+3. Translate instructions into concrete decisions:
+   - MR/PR title
+   - Summary / Changes / Test plan content
+   - Target branch (if different from default)
    - Draft vs. ready
-4. Unklare oder widersprüchliche Anweisungen → **User fragen** vor dem Erstellen
+4. Unclear or conflicting instructions → **ask the user** before creating
 
-### Phase 1: Repository-Status prüfen
+### Phase 1: Check repository status
 
-Führe **parallel** aus:
+Run **in parallel**:
 
 ```bash
 git status
@@ -160,21 +160,21 @@ git log --oneline -10
 git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null || true
 ```
 
-**Default-Branch ermitteln** (wie bei `/commit`):
+**Determine default branch** (same as `/commit`):
 
 1. `git symbolic-ref refs/remotes/origin/HEAD`
 2. Fallback: `main` → `master` → `develop`
 
-**Target-Branch**: Aus Anweisungen/Kontext (`target <branch>`, `base <branch>`). Falls nicht angegeben → Default-Branch.
+**Target branch**: From instructions/context (`target <branch>`, `base <branch>`). If not specified → default branch.
 
-### Phase 2: Vorbedingungen validieren
+### Phase 2: Validate preconditions
 
-| Check | Bei Fehler |
+| Check | On failure |
 |-------|------------|
-| Auf Default-Branch? | Abbrechen: „Erst Feature-Branch erstellen mit `/commit`" |
-| Uncommitted changes? | User fragen: committen, stashen oder abbrechen |
-| Kein Remote? | Abbrechen, Remote konfigurieren lassen |
-| Branch hat keine Commits vs. Default? | Abbrechen: „Keine Änderungen zum Pushen" |
+| On default branch? | Abort: "Create a feature branch first with `/commit`" |
+| Uncommitted changes? | Ask user: commit, stash, or abort |
+| No remote? | Abort; have user configure remote |
+| Branch has no commits vs. default? | Abort: "No changes to push" |
 
 Optional:
 
@@ -183,59 +183,59 @@ git fetch origin
 git log origin/<default-branch>..HEAD --oneline
 ```
 
-### Phase 3: Remote-Plattform erkennen (origin URL first)
+### Phase 3: Detect remote platform (origin URL first)
 
 **Order is mandatory:** resolve the remote URL **before** choosing a client or drafting body text.
 
 1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
 2. Classify from the URL only:
 
-| Plattform | Erkennung (URL only) | Client danach |
-|-----------|----------------------|---------------|
-| **GitHub** | URL enthält `github.com`, oder Hostname enthält `github` (z.B. `github.mycompany.com`) | `gh` CLI — danach `gh auth status` prüfen |
-| **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
-| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
+| Platform | Detection (URL only) | Client afterward |
+|----------|----------------------|------------------|
+| **GitHub** | URL contains `github.com`, or hostname contains `github` (e.g. `github.mycompany.com`) | `gh` CLI — then check `gh auth status` |
+| **GitLab** | Hostname contains `gitlab` (incl. self-hosted, e.g. `gitlab.office.transporeon.com`) | `glab` **or** GitLab MCP (see client choice below) |
+| **Unknown** | Neither rule matches | **Do not guess** — `AskQuestion` (GitHub vs GitLab) or abort. No probing with `gh`/`glab`/MCP for detection. No "push + manual URL" path |
 
-**Wichtig:** Verfügbarkeit von `gh`, `glab` oder GitLab MCP **darf die Plattform nicht überschreiben**. Erst URL → Plattform, dann Client.
+**Important:** Availability of `gh`, `glab`, or GitLab MCP **must not override the platform**. URL → platform first, then client.
 
-**GitLab Client-Wahl:** Was verfügbar und authentifiziert ist. Wenn **beides** geht → **`glab` bevorzugen**; sonst GitLab MCP. Beide nicht nötig.
+**GitLab client choice:** Whatever is available and authenticated. If **both** work → **prefer `glab`**; otherwise GitLab MCP. Both are not required.
 
-**Nach Erkennung:** Alle Title-/Description-Texte und Chat-Labels ausschließlich im Dialekt der erkannten Plattform (siehe **Content formatting**). GitHub → „Pull Request“, `#n`, GFM. GitLab → „Merge Request“, `!n`, GitLab Flavored Markdown.
+**After detection:** All title/description text and chat labels exclusively in the dialect of the detected platform (see **Content formatting**). GitHub → "Pull Request", `#n`, GFM. GitLab → "Merge Request", `!n`, GitLab Flavored Markdown.
 
-### Phase 4: MR/PR-Entwurf erstellen
+### Phase 4: Create MR/PR draft
 
-Commits und Diff analysieren, MR/PR-Inhalt entwerfen — **noch kein Push, noch kein MR/PR erstellen**.
+Analyze commits and diff, design MR/PR content — **no push yet, no MR/PR creation yet**.
 
 ```bash
 git log origin/<target-branch>..HEAD --oneline
 git diff origin/<target-branch>..HEAD --stat
 ```
 
-**Entwurf festhalten:**
+**Capture draft:**
 
-- Titel (Conventional-Commits-Stil; Anweisungen/Kontext haben Vorrang)
-- Vollständige Beschreibung (Summary, Changes, Test plan, Breaking changes falls relevant)
-- Target-Branch, Source-Branch, Plattform, Draft ja/nein
+- Title (Conventional Commits style; instructions/context take precedence)
+- Full description (Summary, Changes, Test plan, Breaking changes if relevant)
+- Target branch, source branch, platform, draft yes/no
 
-**MR/PR-Beschreibung** — Template:
+**MR/PR description** — template:
 
 ```markdown
 ## Summary
-<1-3 Bullet Points — was und warum>
+<1-3 bullet points — what and why>
 
 ## Changes
-<Kurze Liste der wichtigsten Änderungen>
+<Short list of the most important changes>
 
 ## Test plan
-- [ ] <Testschritt 1>
-- [ ] <Testschritt 2>
+- [ ] <Test step 1>
+- [ ] <Test step 2>
 ```
 
-### Phase 5: Entwurf zeigen und bestätigen lassen (Pflicht)
+### Phase 5: Show draft and obtain confirmation (required)
 
-**Vor `git push` und MR/PR-Erstellung** den vollständigen Plan zeigen und mit **`AskQuestion`** auf Bestätigung warten.
+**Before `git push` and MR/PR creation** show the full plan and wait for confirmation with **`AskQuestion`**.
 
-**Nicht automatisch pushen oder MR/PR erstellen** — erst nach expliziter Bestätigung.
+**Do not automatically push or create MR/PR** — only after explicit confirmation.
 
 Use the heading that matches Phase 3: **`## Pull request plan`** on GitHub, **`## Merge request plan`** on GitLab (do not keep a neutral `PR/MR` heading after detection).
 
@@ -262,30 +262,30 @@ Use the heading that matches Phase 3: **`## Pull request plan`** on GitHub, **`#
 2. Create PR via `gh` **or** MR via `glab`/MCP
 ```
 
-**AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung) — wording matches platform:
+**AskQuestion** (required — no fallback to implicit continuation) — wording matches platform:
 
 > Proceed with push and pull request creation?  
 > *(GitLab: “Proceed with push and merge request creation?”)*
 
-Optionen:
+Options:
 
-1. **Yes, push and create PR** *(GitLab: create MR)* — Push und PR/MR mit obigem Titel und Beschreibung erstellen
-2. **Edit first** — User gibt Korrekturen; Entwurf anpassen, erneut bestätigen
-3. **Cancel** — Nichts pushen, keinen PR/MR erstellen
+1. **Yes, push and create PR** *(GitLab: create MR)* — Push and create PR/MR with the title and description above
+2. **Edit first** — User provides corrections; adjust draft, confirm again
+3. **Cancel** — Do not push, do not create PR/MR
 
-Bei **Cancel**: Kurz bestätigen, dass nichts gepusht oder erstellt wurde.
+On **Cancel**: Briefly confirm that nothing was pushed or created.
 
-### Phase 6: Branch pushen (nur nach Bestätigung)
+### Phase 6: Push branch (only after confirmation)
 
 ```bash
 git push -u origin HEAD
 ```
 
-Bei „upstream rejected" oder diverged history: **nicht** force-pushen — User informieren.
+On "upstream rejected" or diverged history: **do not** force-push — inform the user.
 
-### Phase 7: Merge/Pull Request erstellen (nur nach Bestätigung)
+### Phase 7: Create Merge/Pull Request (only after confirmation)
 
-**Formatierung:** Siehe **Content formatting — GitLab or GitHub** — Title plain text; Description als **GitHub GFM** oder **GitLab Flavored Markdown** je nach erkannter Plattform; gilt für `gh` / `glab` / **MCP** / REST.
+**Formatting:** See **Content formatting — GitLab or GitHub** — Title plain text; Description as **GitHub GFM** or **GitLab Flavored Markdown** depending on detected platform; applies to `gh` / `glab` / **MCP** / REST.
 
 #### GitHub (via `gh`)
 
@@ -305,44 +305,44 @@ EOF
 )"
 ```
 
-#### GitLab (via MCP, wenn `glab` nicht verfügbar)
+#### GitLab (via MCP, when `glab` is not available)
 
-1. GitLab MCP prüfen (`GetDynamicTools`, Namespace `GitLab`)
-2. Bei `needsAuth`: User bitten zu authentifizieren
-3. Verfügbare MCP-Tools für MR-Erstellung nutzen — `title` plain text, `description` als **GitLab Flavored Markdown** (siehe Content formatting)
+1. Check GitLab MCP (`GetDynamicTools`, namespace `GitLab`)
+2. If `needsAuth`: ask user to authenticate
+3. Use available MCP tools for MR creation — `title` plain text, `description` as **GitLab Flavored Markdown** (see Content formatting)
 
-### Phase 8: Ergebnis melden
+### Phase 8: Report result
 
-- **URL** des erstellten MR/PR
-- Branch-Name und Target-Branch
-- Anzahl Commits und geänderte Dateien
-- Pipeline/CI-Status, falls abrufbar
-- Hinweis: `/merge-request-review [id] [focus]` für Code Review, `/merge-request-fix [id] [instructions]` für Review-Fixes — ID als `#<n>` auf GitHub, `!<n>` auf GitLab
+- **URL** of the created MR/PR
+- Branch name and target branch
+- Number of commits and changed files
+- Pipeline/CI status, if retrievable
+- Note: `/merge-request-review [id] [focus]` for code review, `/merge-request-fix [id] [instructions]` for review fixes — ID as `#<n>` on GitHub, `!<n>` on GitLab
 
 ---
 
-## PR/MR-Beschreibung — Best Practices
+## PR/MR description — best practices
 
-1. **Summary**: Was wurde geändert und warum
-2. **Test plan**: Konkrete, abhakbare Schritte
-3. **Breaking changes**: Explizit hervorheben
-4. **Scope**: Kleine, fokussierte MRs bevorzugen
+1. **Summary**: What changed and why
+2. **Test plan**: Concrete, checkable steps
+3. **Breaking changes**: Call out explicitly
+4. **Scope**: Prefer small, focused MRs
 
-## Fehlerbehandlung
+## Error handling
 
-| Problem | Aktion |
+| Problem | Action |
 |---------|--------|
-| Auf Default-Branch | Abbrechen, `/commit` empfehlen |
-| Push rejected | Fehler zeigen, kein Force-Push |
-| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten |
-| GitHub ohne `gh` Auth | Abbrechen, `gh auth login` anleiten |
-| GitLab ohne `glab` und ohne MCP | Abbrechen, CLI- oder MCP-Setup anleiten |
-| Auth fehlgeschlagen | User informieren |
-| MR/PR existiert bereits | Bestehende URL zurückgeben |
-| User bricht Bestätigung ab | Nichts pushen, keinen MR/PR erstellen |
+| On default branch | Abort, recommend `/commit` |
+| Push rejected | Show error, no force-push |
+| Unknown remote host | AskQuestion or abort — do not guess |
+| GitHub without `gh` auth | Abort, guide `gh auth login` |
+| GitLab without `glab` and without MCP | Abort, guide CLI or MCP setup |
+| Auth failed | Inform user |
+| MR/PR already exists | Return existing URL |
+| User cancels confirmation | Do not push, do not create MR/PR |
 
-## Verwandte Commands
+## Related commands
 
-- `/commit [instructions]` — Änderungen committen
-- `/merge-request-review [id] [focus]` — Code Review
-- `/merge-request-fix [id] [instructions]` — Review-Kommentare umsetzen
+- `/commit [instructions]` — Commit changes
+- `/merge-request-review [id] [focus]` — Code review
+- `/merge-request-fix [id] [instructions]` — Address review comments
