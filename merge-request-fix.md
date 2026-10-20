@@ -98,9 +98,23 @@ Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@
 5. **Preview** — Phase 5 and Phase 8 show the MR comment as platform Markdown, not escaped JSON
 6. **MCP schema first** — put the Markdown string in the tool’s `body` / `note` field as required by the schema
 
-**GitHub:** `gh pr comment <id> --body-file …` or HEREDOC with `--body` (GFM)
+**GitHub (`gh` or REST) — GFM:**
 
-**GitLab:** `glab mr note <id> -m "$(cat <<'EOF' … EOF)"` or MCP with JSON-encoded Markdown `body` (GitLab Flavored Markdown)
+```bash
+gh pr comment <id> --body-file /tmp/pr-reply.md
+```
+
+**GitLab (`glab`, MCP, or REST) — GitLab Flavored Markdown:**
+
+```bash
+glab mr note <id> -m "$(cat <<'EOF'
+## Review feedback addressed
+...
+EOF
+)"
+```
+
+- MCP / REST: `body` = platform Markdown string, JSON-encoded via tool args or `json.dumps`
 
 ### Pre-post checklist
 
@@ -124,11 +138,41 @@ Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@
 
 ### Phase 2: Plattform erkennen und MR-Daten laden
 
-#### GitLab (MCP bevorzugt)
+**Order is mandatory:** resolve the remote URL **before** choosing a client or loading MR/PR data.
 
-1. GitLab MCP prüfen (`GetDynamicTools`, Namespace `GitLab`)
-2. Bei `needsAuth`: User bitten zu authentifizieren, **nicht** ohne Auth fortfahren
-3. Daten laden:
+1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
+2. Classify from the URL only:
+
+| Plattform | Erkennung (URL only) | Client danach |
+|-----------|----------------------|---------------|
+| **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
+| **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
+| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
+
+**Wichtig:** Verfügbarkeit von `gh`, `glab` oder GitLab MCP **darf die Plattform nicht überschreiben**. Erst URL → Plattform, dann Client.
+
+**GitLab Client-Wahl:** Was verfügbar und authentifiziert ist. Wenn **beides** geht → **`glab` bevorzugen**; sonst GitLab MCP. Beide nicht nötig.
+
+**Nach Erkennung:** Fix plan, summary, commit footer, and reply drafts use the detected platform only — GitHub → `PR #<id>`, `#n`, GFM; GitLab → `MR !<id>`, `!n`, GitLab Flavored Markdown (Phases 5, 7, 8). See **Content formatting — GitLab or GitHub**.
+
+Then load data via the matching subsection below (**GitLab** or **GitHub**).
+
+#### GitLab (via `glab` or MCP)
+
+**Client:** Prefer **`glab`** when both `glab` and GitLab MCP are available and authenticated; otherwise GitLab MCP. Tool discovery for MCP: `GetDynamicTools`, Namespace `GitLab`. Bei `needsAuth`: User bitten zu authentifizieren, **nicht** ohne Auth fortfahren.
+
+**Via `glab` — Daten laden:**
+
+```bash
+glab mr view <id>
+glab mr diff <id>
+glab mr note list <id>
+```
+
+**Via MCP — Daten laden:**
+
+1. Tool-Schema via `GetDynamicTools` prüfen (z.B. `get_merge_request`, `get_merge_request_notes`, `list_merge_request_discussions`)
+2. Entsprechende MCP-Tools aufrufen (gleiche Datentypen wie unten)
 
 | Daten | Zweck |
 |-------|-------|
@@ -137,8 +181,6 @@ Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@
 | MR-Commits | Commit-Historie |
 | MR-Diskussionen / Notes | **Alle** Review-Kommentare, Threads, Inline-Notes |
 | MR-Approvals | Review-States (`CHANGES_REQUESTED`, etc.) |
-
-**Formatting dialect:** Once GitLab vs GitHub is known, all reply drafts use that platform’s Markdown only (see **Content formatting — GitLab or GitHub**).
 
 **GitLab — Kommentare laden (Pflicht):**
 
@@ -149,6 +191,11 @@ Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@
    - Antworten in Threads (vollständige Konversation)
    - Review-Notes mit `CHANGES_REQUESTED`-Status
 3. Pro Kommentar erfassen: Autor, Datum, Datei/Zeile (falls inline), Inhalt, resolved/unresolved, Thread-ID
+
+**GitLab — Kommentar posten (Phase 8, nach Bestätigung):**
+
+- `glab mr note <id> -m "..."` or MCP (`create_workitem_note` or equivalent — schema first)
+- Body = **GitLab Flavored Markdown** (see **Content formatting — GitLab or GitHub**)
 
 #### GitHub (via `gh`)
 
@@ -167,6 +214,11 @@ gh api graphql -f query='...'  # für unresolved review threads, falls nötig
 - Review-Submissions (`CHANGES_REQUESTED` + Body)
 - Threads und Antworten vollständig einbeziehen
 - Resolved/unresolved-Status berücksichtigen
+
+**GitHub — Kommentar posten (Phase 8, nach Bestätigung):**
+
+- `gh pr comment <id> --body-file /tmp/pr-reply.md` or `--body` with HEREDOC
+- Body = **GitHub GFM** (see **Content formatting — GitLab or GitHub**)
 
 ### Phase 3: Lokales Repository vorbereiten
 
@@ -221,7 +273,67 @@ git fetch origin
 
 **Nicht automatisch Fixes anwenden** — erst nach expliziter Bestätigung.
 
+**Labels (strict — match detected platform):**
+
+- **GitHub:** `PR #<id>` in the fix plan table and summary; commit footer `address PR #<id> review comments`
+- **GitLab:** `MR !<id>`; commit footer `address MR !<id> review comments`
+
+Output **exactly one** skeleton below — the branch that matches the detected platform.
+
 ```markdown
+<!-- GitHub skeleton (PR / #) -->
+## Fix plan
+
+| Field | Value |
+|-------|-------|
+| PR | #<id> — <title> |
+| Branch | `<source>` → `<target>` |
+| Actionable comments | <n> |
+| To fix | <n> |
+| To skip | <n> |
+| Open / manual | <n> |
+
+### Planned fixes
+| # | Source | File | Requirement | Planned change |
+|---|--------|------|-------------|----------------|
+| 1 | @reviewer, `file.ts:42` | `file.ts` | Null-check missing | Add guard in `handleRequest()` |
+| 2 | ... | ... | ... | ... |
+
+### Skipped / not implemented
+| # | Source | Reason |
+|---|--------|--------|
+| 3 | @reviewer | Already resolved |
+| 4 | @reviewer | Architecture decision — needs discussion |
+
+### Draft commit message
+```
+fix(review): address PR #<id> review comments
+
+- <change 1>
+- <change 2>
+```
+
+### Draft PR reply comment
+```markdown
+## Review feedback addressed
+
+@reviewer <brief intro if replying to a specific thread>
+
+- <change 1>
+- <change 2>
+
+**Still open (non-blocking):**
+- <item> — <reason>
+```
+
+### Actions
+1. Apply listed code changes locally
+2. Produce fix summary report
+3. *(Later, separate confirmation)* Commit / push / post PR comment
+```
+
+```markdown
+<!-- GitLab skeleton (MR / !) -->
 ## Fix plan
 
 | Field | Value |
@@ -307,53 +419,128 @@ Für jeden **actionable** Punkt:
 
 Am Ende **immer** folgenden Bericht ausgeben (auch wenn nichts gefixt wurde):
 
+**Chat title (strict — match detected platform):**
+
+- **GitHub:** `# Fix Summary: PR #<id> — <title>`
+- **GitLab:** `# Fix Summary: MR !<id> — <title>`
+
+Output **exactly one** skeleton below — the branch that matches the detected platform.
+
 ```markdown
-# MR Fix Summary: !<id> — <titel>
+<!-- GitHub skeleton (PR / #) -->
+# Fix Summary: PR #<id> — <title>
 
-## Übersicht
-| Metrik | Wert |
-|--------|------|
-| MR | !<id> — <titel> |
+## Overview
+| Metric | Value |
+|--------|-------|
+| PR | #<id> — <title> |
 | Branch | `<source>` → `<target>` |
-| Kommentare gesamt | <n> |
+| Comments total | <n> |
 | Actionable | <n> |
-| Gefixt | <n> |
-| Übersprungen | <n> |
-| Offen / manuell | <n> |
+| Fixed | <n> |
+| Skipped | <n> |
+| Open / manual | <n> |
 
-## Gefordert → Gefixt
+## Requested → Fixed
 
-| # | Quelle | Datei | Anforderung (Kurz) | Status | Umsetzung |
-|---|--------|-------|-------------------|--------|-----------|
-| 1 | @reviewer, inline `file.ts:42` | `file.ts` | Null-Check fehlt | ✅ Gefixt | Guard in `handleRequest()` ergänzt |
-| 2 | @bot, inline `api.ts:10` | `api.ts` | SQL-Injection-Risiko | ✅ Gefixt | Parameterized Query |
-| 3 | Review-Kommentar | — | Logging-Level anpassen | ⏭️ Übersprungen | Bereits resolved |
-| 4 | @reviewer | `config.yml` | Struktur umbauen | ❌ Nicht umgesetzt | Architektur-Entscheidung — Diskussion nötig |
-| 5 | @reviewer | `utils.ts:88` | Edge Case X | 💬 Offen | Unklar — Rückfrage an Reviewer |
+| # | Source | File | Requirement | Status | Implementation |
+|---|--------|------|-------------|--------|----------------|
+| 1 | @reviewer, inline `file.ts:42` | `file.ts` | Missing null-check | ✅ Fixed | Guard added in `handleRequest()` |
+| 2 | ... | ... | ... | ... | ... |
 
-**Status-Legende:** ✅ Gefixt · ⏭️ Übersprungen (resolved/duplicate) · ❌ Nicht umgesetzt (begründet) · 💬 Offen (Klärung nötig)
+**Status legend:** ✅ Fixed · ⏭️ Skipped (resolved/duplicate) · ❌ Not implemented (with reason) · 💬 Open (needs clarification)
 
-## Geänderte Dateien
-- `path/to/file.ts` — <kurze Beschreibung>
+## Changed files
+- `path/to/file.ts` — <short description>
 - ...
 
-## Nicht umgesetzte Punkte (Begründung)
+## Not implemented (reason)
 1. ...
 
-## Nächste Schritte
-1. Änderungen prüfen (`git diff`)
-2. Commit mit `/commit` oder manuell
-3. Push und MR aktualisieren (`/merge-request` oder `git push`)
-4. Optional: Kommentare im MR als resolved markieren / Antwort posten
+## Next steps
+1. Review changes (`git diff`)
+2. Commit with `/commit` or manually
+3. Push and update PR (`/merge-request` or `git push`)
+4. Optional: Reply on PR / resolve review threads
+```
+
+```markdown
+<!-- GitLab skeleton (MR / !) -->
+# Fix Summary: MR !<id> — <title>
+
+## Overview
+| Metric | Value |
+|--------|-------|
+| MR | !<id> — <title> |
+| Branch | `<source>` → `<target>` |
+| Comments total | <n> |
+| Actionable | <n> |
+| Fixed | <n> |
+| Skipped | <n> |
+| Open / manual | <n> |
+
+## Requested → Fixed
+
+| # | Source | File | Requirement | Status | Implementation |
+|---|--------|------|-------------|--------|----------------|
+| 1 | @reviewer, inline `file.ts:42` | `file.ts` | Missing null-check | ✅ Fixed | Guard added in `handleRequest()` |
+| 2 | ... | ... | ... | ... | ... |
+
+**Status legend:** ✅ Fixed · ⏭️ Skipped (resolved/duplicate) · ❌ Not implemented (with reason) · 💬 Open (needs clarification)
+
+## Changed files
+- `path/to/file.ts` — <short description>
+- ...
+
+## Not implemented (reason)
+1. ...
+
+## Next steps
+1. Review changes (`git diff`)
+2. Commit with `/commit` or manually
+3. Push and update MR (`/merge-request` or `git push`)
+4. Optional: Reply on MR / resolve discussion threads
 ```
 
 ### Phase 8: Nächste Schritte — Texte zeigen und bestätigen lassen (Pflicht)
 
 **Nach der Summary** die geplanten **Commit-Message** und **MR-Kommentar** nochmals vollständig zeigen und mit **`AskQuestion`** auf Bestätigung warten.
 
-**Nicht automatisch committen, pushen oder MR-Kommentare posten** — erst nach expliziter Bestätigung.
+**Nicht automatisch committen, pushen oder MR/PR-Kommentare posten** — erst nach expliziter Bestätigung.
+
+Use **PR #<id>** / PR wording on GitHub; **MR !<id>** / MR wording on GitLab. Output **exactly one** skeleton below.
 
 ```markdown
+<!-- GitHub skeleton (PR / #) -->
+## Next steps plan
+
+### Commit message
+```
+fix(review): address PR #<id> review comments
+
+- <change 1>
+- <change 2>
+```
+
+### PR reply comment
+```markdown
+## Review feedback addressed
+
+@reviewer <brief intro>
+
+- <change 1>
+- <change 2>
+
+**Still open (non-blocking):**
+- <item> — <reason>
+```
+
+### Changed files
+- `path/to/file.ts` — <description>
+```
+
+```markdown
+<!-- GitLab skeleton (MR / !) -->
 ## Next steps plan
 
 ### Commit message
@@ -399,9 +586,9 @@ Bei **Commit** / **Commit + push** / **Commit + push + MR comment**:
 - Commit-Message referenziert MR-ID und kurz die Hauptfixes
 - Keine Secrets committen
 
-Bei **MR-Kommentar posten** (Option 4 — Text aus Entwurf oben, English, no automation markers; **Content formatting — GitLab or GitHub** beachten — MCP und REST/CLI):
-- **GitLab**: `create_workitem_note` (MCP) oder `glab mr note <id> -m "..."` — body = **GitLab Flavored Markdown**
-- **GitHub**: `gh pr comment <id> --body "..."` — body = **GitHub GFM**
+Bei **MR/PR-Kommentar posten** (Option 4 — Text aus Entwurf oben, English, no automation markers; **Content formatting — GitLab or GitHub** beachten — MCP und REST/CLI):
+- **GitLab**: `glab mr note <id> -m "..."` or MCP note tool — body = **GitLab Flavored Markdown**
+- **GitHub**: `gh pr comment <id> --body-file /tmp/pr-reply.md` or `--body` with HEREDOC — body = **GitHub GFM**
 
 Bei Erfolg: **URL des Kommentars** zurückgeben.
 
@@ -431,8 +618,11 @@ Bei **Summary only** / **Cancel**: Kurz bestätigen, dass nichts committed, gepu
 | Problem | Aktion |
 |---------|--------|
 | Keine MR-ID ermittelbar | AskQuestion oder abbrechen (siehe oben) |
-| Mehrere MRs im Kontext | User fragen, welcher MR gemeint ist |
-| MR nicht gefunden | ID und Projekt prüfen |
+| Mehrere MRs im Kontext | User fragen, welcher MR/PR gemeint ist |
+| MR/PR nicht gefunden | ID und Projekt prüfen |
+| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten. Kein „push + manuelle URL"-Pfad |
+| GitHub ohne `gh` Auth | Abbrechen, `gh auth login` anleiten |
+| GitLab ohne `glab` und ohne MCP | Abbrechen, CLI- oder MCP-Setup anleiten |
 | MCP nicht authentifiziert | Auth anleiten, abbrechen |
 | Kein lokales Repo / falscher Branch | User informieren, Branch-Checkout anbieten |
 | Keine offenen Review-Kommentare | Melden und Summary mit 0 actionable |
