@@ -229,6 +229,27 @@ gh api graphql -f query='...'  # für unresolved review threads, falls nötig
 
 - `gh pr comment <id> --body-file /tmp/pr-reply.md` or `--body` with HEREDOC
 - Body = **GitHub GFM** (see **Content formatting — GitLab or GitHub**)
+- **Resolve implemented review threads (Pflicht, wenn vorhanden):** After posting the reply (or as part of the same Option-4 path), mark every **unresolved** review thread whose finding was **✅ Fixed** in this run as resolved. Do **not** resolve threads that remain open / skipped / not implemented.
+
+```bash
+# List unresolved review threads on the PR
+gh api graphql -f query='
+query($owner:String!,$name:String!,$number:Int!) {
+  repository(owner:$owner, name:$name) {
+    pullRequest(number:$number) {
+      reviewThreads(first: 100) {
+        nodes { id isResolved path comments(first: 1) { nodes { body } } }
+      }
+    }
+  }
+}' -F owner=OWNER -F name=REPO -F number=<id>
+
+# Resolve one thread (repeat for each fixed finding)
+gh api graphql -f query='
+mutation($id:ID!) {
+  resolveReviewThread(input:{threadId:$id}) { thread { id isResolved } }
+}' -f id='PRRT_...'
+```
 
 ### Phase 3: Lokales Repository vorbereiten
 
@@ -471,7 +492,7 @@ Output **exactly one** skeleton below — the branch that matches the detected p
 1. Review changes (`git diff`)
 2. Commit with `/commit` or manually
 3. Push and update PR (`/merge-request` or `git push`)
-4. Optional: Reply on PR / resolve review threads
+4. Optional: Reply on PR; on GitHub, resolve review threads for ✅ Fixed findings
 ```
 
 ```markdown
@@ -587,7 +608,7 @@ Optionen:
 1. **Summary only** — Fixes bleiben lokal uncommitted, nichts posten
 2. **Commit** — Commit mit obiger Message erstellen
 3. **Commit + push** — Commit und `git push` auf PR/MR-Branch
-4. **Commit + push + PR/MR comment** — Zusätzlich obigen PR/MR-Kommentar posten
+4. **Commit + push + PR/MR comment** — Zusätzlich obigen PR/MR-Kommentar posten; **auf GitHub** danach umgesetzte Review-Threads resolven (siehe unten)
 5. **Edit texts first** — User passt Commit-Message oder PR/MR-Kommentar an; erneut bestätigen
 
 Bei **Commit** / **Commit + push** / **Commit + push + PR/MR comment**:
@@ -599,8 +620,9 @@ Bei **Commit** / **Commit + push** / **Commit + push + PR/MR comment**:
 Bei **MR/PR-Kommentar posten** (Option 4 — Text aus Entwurf oben, English, no automation markers; **Content formatting — GitLab or GitHub** beachten — MCP und REST/CLI):
 - **GitLab**: `glab mr note <id> -m "..."` or MCP note tool — body = **GitLab Flavored Markdown**
 - **GitHub**: `gh pr comment <id> --body-file /tmp/pr-reply.md` or `--body` with HEREDOC — body = **GitHub GFM**
+- **GitHub — resolve threads:** Wenn Review-Threads zu den **✅ Fixed**-Findings noch unresolved sind → per GraphQL `resolveReviewThread` resolven (see **GitHub — Kommentar posten**). Skip threads for skipped / open / not-implemented items. Report how many threads were resolved.
 
-Bei Erfolg: **URL des Kommentars** zurückgeben.
+Bei Erfolg: **URL des Kommentars** zurückgeben (und kurz: `Resolved <n> review thread(s)` on GitHub when applicable).
 
 Bei **Summary only** / **Cancel**: Kurz bestätigen, dass nichts committed, gepusht oder gepostet wurde.
 
@@ -614,6 +636,7 @@ Bei **Summary only** / **Cancel**: Kurz bestätigen, dass nichts committed, gepu
 4. **Keine Duplikate** — resolved/already-addressed Kommentare nicht erneut bearbeiten
 5. **Kontext lesen** — Thread-Verlauf und Autor-Antworten berücksichtigen
 6. **Transparenz** — Summary muss jeden Review-Punkt mit Status abbilden
+7. **GitHub: resolve when fixed** — After Option 4 (PR comment), resolve review threads for findings that were implemented; leave others open
 
 ## Git Safety Protocol (strikt einhalten)
 
