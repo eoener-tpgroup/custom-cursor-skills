@@ -87,8 +87,37 @@ Never post Jira markup into MR/PR comments. Never use raw HTML for structure. Ch
 | **Code-Zitate** | Fenced blocks with language tag or inline backticks; no huge dumps |
 | **Links** | Full URLs to files/lines where the platform supports them |
 | **Cross-refs** | GitHub: `#123`, commit SHA · GitLab: `#123`, `!42` when linking MRs |
+| **Inline (Pflicht wenn möglich)** | Findings mit klarer Diff-Zeile als **line comment** an `path` + `line` posten — nicht nur in einem allgemeinen PR/MR-Kommentar auflisten |
+| **GitHub Suggestions** | Wenn ein konkreter Fix für die kommentierten Zeilen formulierbar ist → **`suggestion`-Block** im Inline-Kommentar (siehe unten). Sonst nur Erklärung + optionaler Code-Vorschlag ohne `suggestion` |
 
 Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@mentions`) so rendering is reliable on both platforms.
+
+### GitHub line comments + Suggestions (GFM)
+
+When posting on **GitHub**, prefer **inline review comments** on the changed lines over a single top-level issue comment for actionable findings.
+
+**Suggestion fence** (must be a fenced block whose language tag is exactly `suggestion` — GitHub renders an “Apply suggestion” UI):
+
+````markdown
+**Major:** Guard against null before use.
+
+```suggestion
+if (value == null) {
+  return;
+}
+doWork(value);
+```
+````
+
+| Regel | Detail |
+|-------|--------|
+| Wann Suggestion | Concrete, applyable replacement for the exact commented line(s); same indentation/style as the file |
+| Wann keine Suggestion | Architectural questions, “consider X”, multi-file refactors, or when the correct fix is ambiguous → prose + optional non-suggestion code fence |
+| Multi-line | Use API `start_line` + `line` (and `start_side`/`side`) so the suggestion covers the full hunk being replaced |
+| Side | Almost always `RIGHT` (the PR’s new file version) |
+| Commit | Anchor comments to the PR head commit (`headRefOid`) |
+
+Do **not** put a `suggestion` block in a general PR conversation comment — GitHub only applies suggestions on **pull request review comments** attached to a file/line.
 
 ### Technical encoding (MCP, CLI, and REST)
 
@@ -101,16 +130,63 @@ Prefer the **common Markdown subset** (headings, bullets, code fences, links, `@
 
 **GitHub (`gh` or REST) — GFM:**
 
+General summary (optional, after inline comments):
+
 ```bash
-gh pr comment <id> --body-file /tmp/review-comment.md
-# or gh pr review <id> --comment -b "$(cat <<'EOF'
-## Code Review
-...
+gh pr comment <id> --body-file /tmp/review-summary.md
+```
+
+**Preferred — inline line comments** (with optional `suggestion`). Resolve `OWNER`/`REPO` and head SHA first:
+
+```bash
+OWNER=$(gh repo view --json owner -q .owner.login)
+REPO=$(gh repo view --json name -q .name)
+COMMIT=$(gh pr view <id> --json headRefOid -q .headRefOid)
+
+# Single-line inline comment (+ suggestion when possible)
+gh api "repos/${OWNER}/${REPO}/pulls/<id>/comments" \
+  -f commit_id="$COMMIT" \
+  -f path="src/example.ts" \
+  -F line=42 \
+  -f side=RIGHT \
+  -f body="$(cat <<'EOF'
+**Major:** Null check missing before use.
+
+```suggestion
+if (value == null) {
+  return;
+}
+doWork(value);
+```
 EOF
 )"
 ```
 
+Multi-line replacement (set `start_line`/`line` to the range being replaced):
+
+```bash
+gh api "repos/${OWNER}/${REPO}/pulls/<id>/comments" \
+  -f commit_id="$COMMIT" \
+  -f path="src/example.ts" \
+  -F start_line=40 \
+  -F line=45 \
+  -f start_side=RIGHT \
+  -f side=RIGHT \
+  -f body="$(cat <<'EOF'
+**Critical:** Replace the whole block with a safe variant.
+
+```suggestion
+// replacement lines matching start_line..line
+```
+EOF
+)"
+```
+
+Or submit several inline comments as one review (summary body + comments array via `gh api repos/.../pulls/<id>/reviews` with JSON/`--input`). Prefer that when posting Critical/Major batches so the recommendation stays in one review event.
+
 **GitLab (`glab`, MCP, or REST) — GitLab Flavored Markdown:**
+
+Prefer **inline / diff notes** on the relevant lines when the API/MCP supports positions. General note only for summary:
 
 ```bash
 glab mr note <id> -m "$(cat <<'EOF'
@@ -120,12 +196,22 @@ EOF
 )"
 ```
 
-- MCP / REST: `body` = platform Markdown string, JSON-encoded via tool args or `json.dumps`
+GitLab applyable suggestions (when posting an inline note on the exact lines):
+
+````markdown
+```suggestion:-0+0
+replacement code
+```
+````
+
+- MCP / REST: `body` = platform Markdown string, JSON-encoded via tool args or `json.dumps`; for inline notes include path/line (or position) per schema
 
 ### Pre-post checklist
 
 - [ ] Platform detected; dialect matches GitHub GFM **or** GitLab Markdown
-- [ ] Headings and blank lines between sections
+- [ ] Actionable findings posted as **inline line comments** when `path` + line are known from the diff
+- [ ] **GitHub:** `suggestion` fence included whenever a concrete line-level fix is clear; anchored to head commit + `RIGHT` side
+- [ ] Headings and blank lines between sections (summary comment)
 - [ ] Findings with `file:line` where possible
 - [ ] Review recommendation (Approve / Request changes) clear and near the top
 - [ ] Payload valid for `gh` / `glab` / MCP schema / REST JSON
@@ -384,21 +470,37 @@ Use `#id` / “Pull Request” wording in the GitHub report; `!id` / “Merge Re
 1. ...
 ```
 
-### Phase 8: MR-Kommentar (optional, nur auf Anfrage)
+### Phase 8: MR/PR-Kommentare (optional, nur auf Anfrage)
 
-**Review-Bericht im Chat ausgeben** (Phase 7). **Nicht automatisch** als MR-Kommentar posten.
+**Review-Bericht im Chat ausgeben** (Phase 7). **Nicht automatisch** auf die Plattform posten.
 
-Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post as MR comment", „post critical & major only"). Dann:
+Posting nur wenn der User **explizit** danach fragt (z.B. „post as PR comment", „post critical & major only", „post inline with suggestions"). Dann:
 
-1. Kommentar für die Plattform formatieren — **Content formatting — GitLab or GitHub** (GitHub GFM bzw. GitLab Flavored Markdown; gilt für MCP, CLI und REST)
-2. Bereits bestehende Kommentare referenzieren statt duplizieren
-3. Review-Empfehlung (Approve / Request changes) klar angeben
-4. Posten (platform dialect — GitLab `!id` / MR wording, GitHub `#id` / PR wording in cross-refs):
-   - **GitLab**: `glab mr note <id> -m "..."` or MCP note tool — **GitLab Flavored Markdown**
-   - **GitHub**: `gh pr comment <id> --body-file ...` or `gh pr review <id> --comment -b "..."` — **GitHub GFM**
-5. Erfolg bestätigen und **URL des Kommentars** zurückgeben
+1. Pro Finding mit bekannter Diff-Position: **Inline-Zeilenkommentar** an `path` + `line` (nicht alles in einen allgemeinen Thread kippen)
+2. **GitHub:** Wenn ein klarer Zeilen-Fix möglich ist → Body enthält einen **`suggestion`-Block** (siehe **GitHub line comments + Suggestions**). Sonst Severity + Erklärung + optionaler normaler Code-Fence
+3. Bereits bestehende Kommentare referenzieren statt duplizieren
+4. Optional **ein** Summary-Kommentar / Review-Body mit Recommendation + Überblick (Critical/Major counts); Details bleiben an den Zeilen
+5. Formatierung — **Content formatting — GitLab or GitHub**
+6. Posten:
+   - **GitHub**: `gh api .../pulls/<id>/comments` (inline + suggestion) und/oder `.../pulls/<id>/reviews` mit `comments[]`; Summary optional via `gh pr comment` — **GitHub GFM**
+   - **GitLab**: Inline/diff notes via `glab api .../discussions` or MCP when position is known; optional `suggestion:-0+0`; Summary via `glab mr note` — **GitLab Flavored Markdown**
+7. Erfolg bestätigen und **URLs** der geposteten Inline-Kommentare (und ggf. Summary) zurückgeben
 
-**Kommentar-Template** (für MR-Posting — English, no automation markers):
+**Vor dem Posten** die geplanten Inline-Bodies (inkl. Suggestions) im Chat zeigen und nur nach Bestätigung senden — gleiches Ask-before-mutating Prinzip wie bei anderen Write-Paths.
+
+**Inline-Kommentar-Template** (GitHub, English, no automation markers):
+
+````markdown
+**<Severity>:** <one-sentence problem>
+
+<optional short rationale>
+
+```suggestion
+<exact replacement for the commented line(s)>
+```
+````
+
+**Summary-Template** (optional top-level / review body — English):
 
 ```markdown
 ## Code Review
@@ -408,11 +510,8 @@ Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post 
 ### Summary
 <2-3 sentences>
 
-### Critical / Major
-<Findings with file:line>
-
-### Additional notes
-<Minor, suggestions, open questions>
+### Inline findings
+Posted <n> line comments (Critical: <n>, Major: <n>, …). See threads on the Files changed tab.
 
 ### Positives
 <What works well>
@@ -425,12 +524,13 @@ Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post 
 
 ## Review-Grundsätze
 
-1. **Konkret**: Datei + Zeile + Problem + Fix-Vorschlag
-2. **Konstruktiv**: Positives hervorheben
-3. **Priorisiert**: Critical zuerst
-4. **Kein Fix ohne Aufforderung**: Review ≠ Implementation
-5. **Keine Duplikate**: Bestehende MR-Kommentare einlesen, zusammenfassen und nicht wiederholen
-6. **Diskussion einbeziehen**: Autor-Antworten und resolved/unresolved-Status berücksichtigen
+1. **Konkret**: Datei + Zeile + Problem + Fix-Vorschlag — Findings ohne Zeile nur wenn kein Diff-Anker möglich
+2. **Inline zuerst**: Beim Posten Zeilen kommentieren; auf **GitHub** Suggestions nutzen, sobald der Fix für genau diese Zeilen klar ist
+3. **Konstruktiv**: Positives hervorheben
+4. **Priorisiert**: Critical zuerst
+5. **Kein Fix ohne Aufforderung**: Review ≠ Implementation (Suggestion ≠ lokal angewendeter Fix)
+6. **Keine Duplikate**: Bestehende MR/PR-Kommentare einlesen, zusammenfassen und nicht wiederholen
+7. **Diskussion einbeziehen**: Autor-Antworten und resolved/unresolved-Status berücksichtigen
 
 ## Fehlerbehandlung
 
