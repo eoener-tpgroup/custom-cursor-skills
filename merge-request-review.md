@@ -154,7 +154,7 @@ EOF
 |-----------|----------------------|---------------|
 | **GitHub** | URL enthält `github.com`, oder bekannter GitHub-Enterprise-Host den `gh` für dieses Repo kennt | `gh` CLI — danach `gh auth status` prüfen |
 | **GitLab** | Hostname enthält `gitlab` (inkl. Self-Hosted, z.B. `gitlab.office.transporeon.com`) | `glab` **oder** GitLab MCP (siehe Client-Wahl unten) |
-| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung |
+| **Unbekannt** | Keine der Regeln trifft | **Nicht raten** — `AskQuestion` (GitHub vs GitLab) oder abbrechen. Kein Probe von `gh`/`glab`/MCP zur Erkennung. Kein „push + manuelle URL"-Pfad |
 
 **Wichtig:** Verfügbarkeit von `gh`, `glab` oder GitLab MCP **darf die Plattform nicht überschreiben**. Erst URL → Plattform, dann Client.
 
@@ -294,11 +294,51 @@ Im Review-Bericht einen Abschnitt **„Bestehende MR-Diskussion"** einfügen:
 - **GitHub:** `# Code Review: PR #<id> — <title>`
 - **GitLab:** `# Code Review: MR !<id> — <title>`
 
-Use `#id` / “Pull Request” wording in the GitHub report; `!id` / “Merge Request” on GitLab. Do not mix dialects in one report.
+Use `#id` / “Pull Request” wording in the GitHub report; `!id` / “Merge Request” on GitLab. Do not mix dialects in one report. Output **exactly one** skeleton below — the branch that matches the detected platform.
 
 ```markdown
-# Code Review: PR #<id> — <title>   <!-- GitHub -->
-# Code Review: MR !<id> — <title>   <!-- GitLab -->
+<!-- GitHub skeleton (PR / #) -->
+# Code Review: PR #<id> — <title>
+
+## Executive Summary
+<2-4 Sätze + Merge-Empfehlung>
+
+**Empfehlung:** ✅ Approve / ⚠️ Approve with comments / ❌ Request changes
+
+## PR-Metadaten
+| Feld | Wert |
+|------|------|
+| Autor | ... |
+| Branch | `<source>` → `<target>` |
+| Commits | ... |
+| Dateien | ... (+/- Zeilen) |
+| Checks / CI | ✅/❌/⏳ |
+| Bestehende Kommentare | <Anzahl> (<offen> offen, <resolved> resolved) |
+
+## Bestehende PR-Diskussion
+<Zusammenfassung + Tabelle aus Phase 3>
+
+## Findings
+### 🔴 Critical
+| # | Datei | Problem | Empfehlung | Bereits kommentiert? |
+...
+
+## Positives
+- ...
+
+## Commit-Message-Analyse
+- Conventional Commits eingehalten? Ja/Nein
+
+## Testplan-Bewertung
+- Testplan vorhanden? Fehlende Tests?
+
+## Nächste Schritte
+1. ...
+```
+
+```markdown
+<!-- GitLab skeleton (MR / !) -->
+# Code Review: MR !<id> — <title>
 
 ## Executive Summary
 <2-4 Sätze + Merge-Empfehlung>
@@ -391,7 +431,7 @@ Posting nur wenn der User **explizit** danach fragt (z.B. im Anschluss: „post 
 | Keine MR-ID ermittelbar | AskQuestion oder abbrechen (siehe oben) |
 | Mehrere MRs im Kontext | User fragen, welcher MR gemeint ist |
 | MR/PR nicht gefunden | ID und Projekt prüfen |
-| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten |
+| Remote-Host unbekannt | AskQuestion oder abbrechen — nicht raten. Kein „push + manuelle URL"-Pfad |
 | GitHub ohne `gh` Auth | Abbrechen, `gh auth login` anleiten |
 | GitLab ohne `glab` und ohne MCP | Abbrechen, CLI- oder MCP-Setup anleiten |
 | MCP nicht authentifiziert | Auth anleiten, abbrechen |
