@@ -1,14 +1,14 @@
 ---
 name: commit
-description: Erstellt einen Git-Commit nach Conventional Commits. Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf main/master/development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
+description: Erstellt einen Git-Commit nach Conventional Commits (ohne Emojis/Gitmoji). Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf main/master/development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
 ---
 
 # Commit
 
-Erstellt einen sauberen Git-Commit nach [Conventional Commits](https://www.conventionalcommits.org/).
+Erstellt einen sauberen Git-Commit nach [Conventional Commits](https://www.conventionalcommits.org/) — **ohne Emojis oder Gitmoji** in Subject, Body oder Footer.
 Wird manuell via `/commit [instructions]` ausgelöst.
 
-## ⚙️ Optionale Argumente & Kontext
+## Optionale Argumente & Kontext
 
 Alles **nach** `/commit` im User-Prompt ist optionaler Freitext (`[instructions]`). Er kann Leerzeichen enthalten.
 
@@ -211,6 +211,8 @@ git checkout -b <branch-name> origin/development
 
 #### Regeln
 
+- **Format ist Pflicht**: Jede Commit-Message **muss** dem Conventional-Commits-Schema entsprechen (`type[(scope)][!]: description`). Keine freien Sätze ohne Type, keine Gitmoji-/Emoji-Prefixes, keine abweichenden Hausformate.
+- **Keine Emojis**: Subject, Body und Footer enthalten **keinerlei** Emojis oder dekorative Unicode-Symbole (inkl. Gitmoji). Gilt auch für vom User vorgegebene Texte und für Vorbilder aus `git log`.
 - **Subject**: Imperativ, Kleinbuchstaben am Anfang, max. **72 Zeichen**, spezifisch (nicht „fix bug")
 - **Scope**: Optional, lowercase, konsistent im Projekt (z.B. `auth`, `api`, `ui`)
 - **Body**: Erklärt **warum** die Änderung nötig war; Leerzeile nach Subject
@@ -241,17 +243,19 @@ BREAKING CHANGE: /api/v1/* routes are removed. Migrate to /api/v2/*.
 
 #### Message aus Anweisungen, Kontext und Diff ableiten
 
-1. Wenn der User eine vollständige oder teilweise Message vorgegeben hat → **übernehmen** (Conventional-Commits-Format prüfen, ggf. minimal korrigieren)
+1. Wenn der User eine vollständige oder teilweise Message vorgegeben hat → **übernehmen**, dann **normalisieren**: Conventional-Commits-Format erzwingen, Emojis/Gitmoji entfernen, Type/Scope/Subject ggf. minimal korrigieren
 2. `git diff --staged` analysieren
 3. Dominanten Type und Scope bestimmen — **Anweisungen/Kontext haben Vorrang** vor reiner Diff-Heuristik
-4. Subject aus dem **Hauptziel** der Änderung formulieren
-5. Body nur wenn der Grund nicht offensichtlich ist oder der Kontext ein „Warum" liefert
+4. Subject aus dem **Hauptziel** der Änderung formulieren — nur ASCII-Text, keine Emojis
+5. Body nur wenn der Grund nicht offensichtlich ist oder der Kontext ein „Warum" liefert — ebenfalls ohne Emojis
 6. Issue-Referenzen aus Anweisungen/Kontext in den Footer übernehmen
-7. Commit-Stil aus `git log` des Projekts übernehmen
+7. Aus `git log` nur **projektübliche Types/Scopes** und Subject-Ton übernehmen — **nicht** Emoji-/Gitmoji-Stil und **nicht** Nicht-Conventional-Formate. Conventional Commits + No-Emoji haben Vorrang vor Historie
 
 ### Phase 5: Entwurf zeigen und bestätigen lassen (Pflicht)
 
 **Vor jeder schreibenden Git-Operation** (`git checkout -b`, `git add`, `git commit`) den vollständigen Plan zeigen und mit **`AskQuestion`** auf Bestätigung warten.
+
+**Message-Check vor dem Plan:** Draft muss Conventional-Commits-Format erfüllen und **keine Emojis** enthalten. Sonst vor dem AskQuestion korrigieren.
 
 **Nicht automatisch committen** — erst nach expliziter Bestätigung.
 
@@ -338,6 +342,7 @@ EOF
 | Pre-commit Hook schlägt fehl | Hook-Fehler zeigen, **nicht** amend — Problem fixen, **neuer** Commit |
 | Merge-Konflikte | Nicht committen; User informieren |
 | Secrets in Diff | Nicht committen; Dateien warnen |
+| Message mit Emoji/Gitmoji oder ohne Conventional-Commits-Format | Vor Commit normalisieren (Emojis entfernen, Type/Subject korrigieren); Plan erneut zeigen |
 | Ansible: Commit auf geschütztem Branch verlangt | Ablehnen; Feature-Branch von `development` anbieten oder abbrechen |
 | Ansible: auf main/master/integration/acceptance/production | AskQuestion — von development branchen oder Cancel |
 | Ansible: `origin/development` fehlt nach fetch | Abbrechen; User informieren |

@@ -10,7 +10,7 @@ Each `*.md` file in this repo is one workflow (for example `commit.md` → `/com
 
 | Name | File | Purpose |
 |------|------|---------|
-| `commit` | [`commit.md`](commit.md) | Conventional Commits + optional feature branch; ansible: never commit on main/master/env branches |
+| `commit` | [`commit.md`](commit.md) | Conventional Commits (no emojis) + optional feature branch; ansible: never commit on main/master/env branches |
 | `merge-request` | [`merge-request.md`](merge-request.md) | Push branch and create GitHub PR or GitLab MR |
 | `merge-request-review` | [`merge-request-review.md`](merge-request-review.md) | Intensive MR/PR code review |
 | `merge-request-fix` | [`merge-request-fix.md`](merge-request-fix.md) | Apply actionable review feedback locally |
@@ -194,8 +194,8 @@ Creates a Conventional Commits commit. On the default branch it can create a fea
 | | |
 |--|--|
 | **Can do** | Inspect status/diff/log; plan files to stage; draft Conventional Commit message; create `type/short-description` branch; stage and commit after confirmation |
-| **Cannot do** | Commit without confirmation; amend unless user-rule conditions are met; skip hooks; commit secrets (`.env`, credentials, tokens); invent a message when diff + context are insufficient; commit on protected ansible branches (even if the user asks) |
-| **Guidelines** | Prefer one logical change per commit; subject imperative, ≤72 chars; body explains *why*; issue refs in footer; ask when instructions conflict with the diff; ansible: AskQuestion when on main/master/integration/acceptance/production |
+| **Cannot do** | Commit without confirmation; amend unless user-rule conditions are met; skip hooks; commit secrets (`.env`, credentials, tokens); invent a message when diff + context are insufficient; put emojis/Gitmoji in commit messages; commit on protected ansible branches (even if the user asks) |
+| **Guidelines** | Prefer one logical change per commit; subject imperative, ≤72 chars, no emojis; body explains *why*; issue refs in footer; Conventional Commits format is mandatory even if project history differs; ask when instructions conflict with the diff; ansible: AskQuestion when on main/master/integration/acceptance/production |
 
 **Usage examples**
 
