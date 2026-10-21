@@ -15,6 +15,18 @@ Wird manuell via `/jira-comment <ticket-key> [comment text]` ausgelöst.
 
 **Jira comments must always be written in English** — regardless of the language used in chat. This matches team conventions for external-facing Jira content.
 
+## Agency agent
+
+**Before Phase 1**, read and adopt judgment/quality guidance from:
+
+| Role | Path |
+|------|------|
+| Primary | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` |
+
+**Precedence:** This command’s phases, security rules, Wiki Markup formatting, and AskQuestion gates win on conflict. The agency agent guides Jira hygiene, tone, and delivery traceability — it does not replace phases, invent steps, or override abort/confirmation rules. Do not switch commit/branch conventions from that agent when this command only posts a comment.
+
+If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+
 ---
 
 ## ⚠️ Pflichtargument: Ticket-Key
