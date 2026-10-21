@@ -55,6 +55,8 @@ Everything **after** `/merge-request` in the user prompt is optional free text (
 
 **Precedence:** This command’s phases, dual-platform detection (GitHub/GitLab), Content formatting, Git Safety Protocol, and AskQuestion gates win on conflict. Prefer this command’s Conventional Commits–style titles and platform Markdown over Gitmoji or agent-specific branch templates unless the **repository** already uses those conventions. The agency agent guides clean history, review-ready summaries, and Jira traceability — it does not replace phases, invent platform clients, or override abort/confirmation rules.
 
+If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 
 **Mandatory for every write path.** After platform detection (Phase 3), format title and description for **that platform only** — whether creating via **`gh`**, **`glab`**, **GitLab MCP**, **GitHub/GitLab REST API**, or any other client.
@@ -251,7 +253,7 @@ git diff origin/<target-branch>..HEAD --stat
 Output **exactly one** skeleton below — match Phase 3 (do not keep a neutral `PR/MR` heading after detection).
 
 ```markdown
-<!-- GitHub skeleton -->
+GitHub skeleton:
 ## Pull request plan
 
 | Field | Value |
@@ -275,7 +277,7 @@ Output **exactly one** skeleton below — match Phase 3 (do not keep a neutral `
 ```
 
 ```markdown
-<!-- GitLab skeleton -->
+GitLab skeleton:
 ## Merge request plan
 
 | Field | Value |

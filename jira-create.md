@@ -25,6 +25,8 @@ Wird manuell via `/jira-create [description]` ausgelöst.
 
 **Precedence:** This command’s phases, PITOPS/Service Desk field IDs, Wiki Markup formatting, security rules, and AskQuestion gates win on conflict. The agency agent guides ticket hygiene, clear work units, and professional tone — it does not replace phases, invent field IDs, or override abort/confirmation rules.
 
+If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+
 ---
 
 ## Voraussetzungen

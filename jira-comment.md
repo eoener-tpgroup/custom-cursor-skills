@@ -25,6 +25,8 @@ Wird manuell via `/jira-comment <ticket-key> [comment text]` ausgelöst.
 
 **Precedence:** This command’s phases, security rules, Wiki Markup formatting, and AskQuestion gates win on conflict. The agency agent guides Jira hygiene, tone, and delivery traceability — it does not replace phases, invent steps, or override abort/confirmation rules. Do not switch commit/branch conventions from that agent when this command only posts a comment.
 
+If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+
 ---
 
 ## ⚠️ Pflichtargument: Ticket-Key

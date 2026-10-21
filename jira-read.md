@@ -25,6 +25,8 @@ Ticket content (summary, description, comments) is quoted **as-is** from Jira �
 
 **Precedence:** This command’s phases, security rules, and abort conditions win on conflict. The agency agent guides how to summarize delivery context and surface traceability gaps — it does not replace phases, invent ticket content, or translate quoted Jira fields.
 
+If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+
 ---
 
 ## ⚠️ Pflichtargument: Ticket-Key
