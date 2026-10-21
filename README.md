@@ -1,6 +1,6 @@
 # Custom Cursor Skills & Commands
 
-Reusable agent workflows for day-to-day engineering work: Git commits and merge requests, Jira tickets, and read-only remote host / PostgreSQL analysis.
+Reusable agent workflows for day-to-day engineering work: Git commits and merge requests, Jira tickets, read-only remote host / PostgreSQL analysis, and Ansible role/playbook create–review loops.
 
 Each `*.md` file in this repo is one workflow (for example `commit.md` → `/commit` on the CLI, or a `commit` skill in the IDE). Place them as **CLI commands**, **IDE skills**, or both.
 
@@ -19,6 +19,7 @@ Each `*.md` file in this repo is one workflow (for example `commit.md` → `/com
 | `jira-comment` | [`jira-comment.md`](jira-comment.md) | Post a comment on a Jira ticket |
 | `remote-analyze` | [`remote-analyze.md`](remote-analyze.md) | Read-only SSH analysis (host / PostgreSQL / Barman) |
 | `postgres-optimize` | [`postgres-optimize.md`](postgres-optimize.md) | Read-only PostgreSQL performance tuning advice |
+| `ansible` | [`ansible.md`](ansible.md) | Create, extend, improve, or review Ansible roles/playbooks with a multi-agent team |
 
 ---
 
@@ -149,6 +150,7 @@ You can install **both**: keep CLI copies under `~/.cursor/commands/` and skill 
 | Git / MR workflows | Local git repo; `gh` (GitHub) and/or `glab` / GitLab MCP (GitLab) |
 | Jira workflows | Jira MCP **or** `JIRA_URL` + `JIRA_TOKEN` in `~/.cursor/.env` |
 | Remote / Postgres workflows | Working SSH access to the target host (keys / agent) |
+| Ansible workflows | Local Ansible content in the workspace; agency rules under `~/.cursor/rules/`; optional `ansible-lint` / `yamllint` / `ansible-playbook` |
 
 ---
 
@@ -163,7 +165,7 @@ These rules appear across the command definitions and should be treated as hard 
 5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; **Jira Wiki Markup** for Jira create/comment — never Markdown/GFM/ADF as the authoring dialect for those commands. For `/merge-request`, `/merge-request-review`, and `/merge-request-fix`, the forge comes from the **origin URL** (not from which CLI happens to be installed).
 6. **Git safety** — no `git config` changes, no force-push to `main`/`master`, no skipping hooks, no destructive git without an explicit user request.
 7. **Remote analysis is read-only** — `/remote-analyze` and `/postgres-optimize` must never write, restart services, or run DDL/DML on the remote host.
-8. **Agency agents** — Jira and MR commands instruct the agent to **read** matching personas from `~/.cursor/rules/*.mdc` before the workflow (see below). Command phases, safety, and AskQuestion gates always win on conflict.
+8. **Agency agents** — Jira, MR, and `/ansible` commands instruct the agent to **read** matching personas from `~/.cursor/rules/*.mdc` before the workflow (see below). Command phases, safety, and AskQuestion gates always win on conflict.
 
 ---
 
@@ -177,6 +179,7 @@ These workflows expect agency-agent style rules installed under `~/.cursor/rules
 | `/merge-request` | `engineering-git-workflow-master.mdc` | `project-management-jira-workflow-steward.mdc` when a ticket key is in branch/commits/context |
 | `/merge-request-review` | `engineering-code-reviewer.mdc` | `security-appsec-engineer.mdc` when Focus is security-related |
 | `/merge-request-fix` | `engineering-minimal-change-engineer.mdc` | — |
+| `/ansible` | `engineering-multi-agent-systems-architect.mdc` + `engineering-devops-automator.mdc` + `engineering-code-reviewer.mdc` + `security-cloud-security-architect.mdc` (+ `engineering-minimal-change-engineer.mdc` for writes) | Optional: secrets / network / SRE / technical-writer / appsec rules by focus |
 
 If a listed file is missing, continue the command workflow and note that the agency agent could not be loaded.
 
@@ -370,6 +373,27 @@ Read-only PostgreSQL performance analysis: workload classification and prioritiz
 
 ---
 
+### `/ansible`
+
+Creates, extends, improves, or reviews Ansible roles, playbooks, and related inventory/config using a **fixed multi-agent team** (personas from `~/.cursor/rules`). Modes: `create`, `extend`, `improve`, `review`.
+
+| | |
+|--|--|
+| **Can do** | Discover repo layout, conventions, and optional `pitops/ansible` context; load core + optional agency personas; **all user-facing output in English** (status, plans, reports, errors, questions) including an English plan with **AskQuestion** before writes (mutating modes); implement or extend roles/playbooks with minimal scope; multi-pass review + security; fix loop (≤ **4**) for Critical/Major; local `yamllint` / `ansible-lint` / `ansible-playbook --syntax-check` when available; structured report with verification and follow-ups |
+| **Cannot do** | Commit, push, or open MR/PR (use `/commit`, `/merge-request`); deploy or run plays against live inventory without an explicit post-report request; embed secrets (Vault/ref names OK); apply writes without confirmation in `create` / `extend` / `improve`; invent lint or syntax-check results; replace command phases with persona-only improvisation |
+| **Guidelines** | **English only** for all user-facing output (status, plans, reports, errors, questions), even if the user writes in another language; target required for `extend`, `improve`, and `review`; `review` is findings-only (no file writes, no fix loop unless user switches mode); max **4** fix loops then report open Critical/Major; warn on protected branches in `pitops/ansible` and defer commits to `/commit` on a feature branch from `development`. Load orchestrator, implementer, reviewer, and security before Phase 2 discovery; load minimal-change engineer for mutating modes; add optional rules (secrets, network, SRE, docs, appsec) when focus/target signals match. |
+
+**Usage examples**
+
+```text
+/ansible create role nginx — Rocky 9, TLS behind HAProxy
+/ansible extend roles/postgresql add WAL archiving to Barman
+/ansible improve playbooks/site.yml idempotency and handlers
+/ansible review roles/tp_db focus secrets and privilege escalation
+```
+
+---
+
 ## Typical workflows
 
 ```text
@@ -385,6 +409,13 @@ Read-only PostgreSQL performance analysis: workload classification and prioritiz
 /jira-create disk alert investigation on db01 — productive, storage
 /jira-comment PITOPS-123456 Posted analysis summary and recommended next steps
 /jira-read PITOPS-123456
+
+# Ansible role work
+/ansible create role nginx — Rocky 9, TLS behind HAProxy
+/ansible improve roles/nginx idempotency and handlers
+/ansible review roles/nginx focus secrets
+/commit feat(nginx): add TLS termination role
+/merge-request
 ```
 
 ---
