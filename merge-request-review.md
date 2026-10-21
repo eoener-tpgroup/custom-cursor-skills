@@ -66,6 +66,17 @@ The MR ID appears in the user prompt **after the command name** (e.g. `/merge-re
 
 **This command definition is in English.** **Always write all user-facing output in English** — status messages, review reports, error messages, questions to the user, and MR/PR comments. This applies even if the user writes in another language.
 
+## Agency agent
+
+**Before Phase 1**, read and adopt judgment/quality guidance from:
+
+| Role | Path | When |
+|------|------|------|
+| Primary | `~/.cursor/rules/engineering-code-reviewer.mdc` | Always |
+| Optional | `~/.cursor/rules/security-appsec-engineer.mdc` | When Focus (argument or chat) emphasizes security, auth, secrets, injection, XSS, or similar |
+
+**Precedence:** This command’s phases, severity scale (Critical/Major/Minor/Suggestion/Question), dual-platform detection, Content formatting, inline-comment/suggestion rules, and “post only on explicit request” win on conflict. Map the primary agent’s blocker/suggestion/nit language onto this command’s severity levels. The agency agent guides review depth and constructive tone — it does not replace phases, auto-post to the MR/PR, or invent findings without reading the diff and existing discussion.
+
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 
 **Mandatory for every write path.** After platform detection (Phase 2), format MR/PR review comments for **that platform only** — whether posting via **`gh`**, **`glab`**, **GitLab MCP**, or **GitHub/GitLab REST API**.

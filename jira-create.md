@@ -15,6 +15,16 @@ Wird manuell via `/jira-create [description]` ausgelöst.
 
 **Jira ticket content (summary, description) must always be written in English** — regardless of the language used in chat.
 
+## Agency agent
+
+**Before Phase 1**, read and adopt judgment/quality guidance from:
+
+| Role | Path |
+|------|------|
+| Primary | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` |
+
+**Precedence:** This command’s phases, PITOPS/Service Desk field IDs, Wiki Markup formatting, security rules, and AskQuestion gates win on conflict. The agency agent guides ticket hygiene, clear work units, and professional tone — it does not replace phases, invent field IDs, or override abort/confirmation rules.
+
 ---
 
 ## Voraussetzungen

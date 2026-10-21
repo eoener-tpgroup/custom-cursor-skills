@@ -15,6 +15,16 @@ Wird manuell via `/jira-read <ticket-key>` ausgelöst.
 
 Ticket content (summary, description, comments) is quoted **as-is** from Jira — do not translate unless the user explicitly asks.
 
+## Agency agent
+
+**Before Phase 1**, read and adopt judgment/quality guidance from:
+
+| Role | Path |
+|------|------|
+| Primary | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` |
+
+**Precedence:** This command’s phases, security rules, and abort conditions win on conflict. The agency agent guides how to summarize delivery context and surface traceability gaps — it does not replace phases, invent ticket content, or translate quoted Jira fields.
+
 ---
 
 ## ⚠️ Pflichtargument: Ticket-Key

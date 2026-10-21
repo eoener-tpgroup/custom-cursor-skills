@@ -44,6 +44,17 @@ Everything **after** `/merge-request` in the user prompt is optional free text (
 
 **Always write all user-facing output in English** — status messages, summaries, MR/PR descriptions, error messages, and questions to the user. This command definition is also in English. The user may still write in another language; respond in English regardless.
 
+## Agency agent
+
+**Before Phase 0**, read and adopt judgment/quality guidance from:
+
+| Role | Path | When |
+|------|------|------|
+| Primary | `~/.cursor/rules/engineering-git-workflow-master.mdc` | Always |
+| Optional | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` | When a Jira ticket key appears in branch name, commits, instructions, or chat context |
+
+**Precedence:** This command’s phases, dual-platform detection (GitHub/GitLab), Content formatting, Git Safety Protocol, and AskQuestion gates win on conflict. Prefer this command’s Conventional Commits–style titles and platform Markdown over Gitmoji or agent-specific branch templates unless the **repository** already uses those conventions. The agency agent guides clean history, review-ready summaries, and Jira traceability — it does not replace phases, invent platform clients, or override abort/confirmation rules.
+
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 
 **Mandatory for every write path.** After platform detection (Phase 3), format title and description for **that platform only** — whether creating via **`gh`**, **`glab`**, **GitLab MCP**, **GitHub/GitLab REST API**, or any other client.
