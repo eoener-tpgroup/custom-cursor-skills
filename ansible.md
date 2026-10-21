@@ -83,6 +83,8 @@ Fixed pipeline for every run:
 ```text
 Discover → Plan → [AskQuestion if mutating] → Implement
        → Review + Security → Fix (≤ 4 loops) → Verify → Report
+
+(review: Discover → Plan → Review + Security → Verify → Report)
 ```
 
 | Exit | Behavior |
@@ -96,6 +98,7 @@ Discover → Plan → [AskQuestion if mutating] → Implement
 ## Safety protocol (strict)
 
 - **No secrets** in files or chat — Vault/ref names OK; never plaintext passwords, keys, tokens
+- **Do not** run `ansible-vault view`, `ansible-vault decrypt`, or otherwise decrypt Vault contents into chat or the working tree during discovery/review
 - **No remote deploy** / live inventory apply unless the user **explicitly** requests it after the report in the same session
 - **No commit / push / MR** — hand off to `/commit`, `/merge-request`
 - **No** `git config` changes, force-push, or skipping hooks
@@ -110,6 +113,7 @@ Discover → Plan → [AskQuestion if mutating] → Implement
    - **Mode** — first token, lowercase
    - **Target** — second token when present and mode needs it (path-like or name)
    - **Focus** — remaining text
+   - **`create` special case:** if the second token is `role`, `playbook`, or `inventory` and a third token exists, treat the second as artefact type and the third as name (target = that name, optionally normalized to `roles/<name>` / playbook path per repo conventions); focus = remaining tokens after the name
 2. Validate mode ∈ `{create, extend, improve, review}`
 3. If mode invalid/missing → AskQuestion or abort
 4. If target missing for `extend`/`improve`/`review` → AskQuestion or abort
@@ -173,7 +177,7 @@ For `review`: skip confirm; no writes in later phases.
 
 1. **Implementer** applies changes following repo conventions and Diff-Guard (minimal scope)
 2. **Reviewer** + **Security** (and optionals) assess the result
-3. **Fix loop** (max **4**): address Critical/Major findings, re-review
+3. **Fix loop** (max **4**): address Critical/Major findings, re-review; when local tools exist, run `yamllint` / `ansible-lint` / `ansible-playbook --syntax-check` on changed paths **inside each iteration** so failures can consume the fix budget
 4. Stop per Team loop exit table
 
 #### `review`
