@@ -2,7 +2,7 @@
 
 Loaded by `/jira create …` after `jira/_common.md`. Do not run as a standalone command.
 
-Erstellt ein **neues Jira-Ticket** in unserem Jira (Transporeon Service Desk, Projekt **PITOPS**). Der Ticket-Inhalt kommt entweder aus dem User-Prompt oder wird aus dem **bisherigen Chat-Kontext** abgeleitet.
+Creates a **new Jira ticket** in Transporeon Service Desk, project **PITOPS**. Ticket content comes from the user prompt or is derived from **chat context**.
 
 **Invocation:** `/jira create [description]`
 
@@ -14,79 +14,79 @@ Wiki Markup, security, and auth: see `jira/_common.md`.
 
 ## Workflow
 
-### Phase 1: Ticket-Inhalt ermitteln
+### Phase 1: Determine ticket content
 
-**Zwei Quellen** (Priorität):
+**Two sources** (priority):
 
-| Priorität | Quelle | Wann |
-|-----------|--------|------|
-| 1 | **Expliziter Text** im User-Prompt nach `/jira create` | User hat Beschreibung direkt angegeben |
-| 2 | **Chat-Kontext** | Kein expliziter Text — aus bisheriger Konversation ableiten |
+| Priority | Source | When |
+|----------|--------|------|
+| 1 | **Explicit text** in the user prompt after `/jira create` | User provided a description directly |
+| 2 | **Chat context** | No explicit text — derive from the conversation so far |
 
-**Aus Kontext ableiten — Regeln:**
+**Derive from context — rules:**
 
-1. **Problem/Anfrage** klar identifizieren (Was? Warum? Welches System?)
-2. **Relevante Details** einbeziehen: Hostnamen, Fehlermeldungen, Zeiträume, betroffene Services
-3. **Keine internen Meta-Referenzen** (Tools, Agent, Automatisierung)
-4. Professioneller Ton — als hätte der User persönlich das Ticket erstellt
-5. Wenn der Kontext **kein klares Ticket-Thema** liefert → **nicht raten**, User fragen
+1. Clearly identify the **problem/request** (What? Why? Which system?)
+2. Include **relevant details**: hostnames, error messages, time ranges, affected services
+3. **No internal meta-references** (tools, agent, automation)
+4. Professional tone — as if the user wrote the ticket personally
+5. If context has **no clear ticket topic** → **do not guess**, ask the user
 
-**Bei Unklarheiten → User fragen (Pflicht):**
+**When unclear → ask the user (required):**
 
-Wenn Pflichtinformationen fehlen oder mehrdeutig sind, **`AskQuestion`** nutzen (Pflicht — kein Fallback auf Chat-Fragen). Fragen **einzeln oder gebündelt**, je nachdem was fehlt:
+If required information is missing or ambiguous, prefer **`AskQuestion`** (ask individually or bundled as needed). If AskQuestion is unavailable, present the **same questions/options in chat** and wait — do not guess, and do not continue without answers.
 
-**Pflichtfragen (wenn nicht aus Prompt/Kontext ableitbar):**
+**Required questions (when not derivable from prompt/context):**
 
-| Feld | Frage | Optionen (Beispiel) |
-|------|-------|---------------------|
-| **Summary** | What should the ticket title (summary) be? | Freitext oder Vorschläge aus Kontext |
+| Field | Question | Options (example) |
+|-------|----------|-------------------|
+| **Summary** | What should the ticket title (summary) be? | Free text or suggestions from context |
 | **Request Type** | What type of request is this? | Service Request Platform / Platform Incident / Change Request / Update Request / Other |
 | **Environment** | Which environment is affected? | Productive / Acceptance / Integration / Development / HQ / Enterprise / Other |
 | **Platform** | Which platform? | Transporeon / Ticontract / Mercareon / Tim / ControlPay / All / Other |
 | **Component** | Which component area? | Database / Network / Storage / Kubernetes / Monitoring / VMware / Other / … |
-| **Description** | What details should the ticket description include? | Freitext |
+| **Description** | What details should the ticket description include? | Free text |
 
-**AskQuestion-Beispiel** (wenn mehrere Felder unklar):
+**AskQuestion example** (when several fields are unclear):
 
 > I need a few details to create the Jira ticket:
 
-Optionen für Request Type, Environment, Platform, Component — jeweils als Multiple-Choice wo möglich, plus „Other (I'll specify)".
+Options for Request Type, Environment, Platform, Component — multiple-choice where possible, plus “Other (I'll specify)”.
 
-**Nicht erstellen**, solange mindestens Summary, Request Type, Environment, Platform und Component nicht geklärt sind.
+**Do not create** until at least Summary, Request Type, Environment, Platform, and Component are clarified.
 
-### Phase 2: Jira-Zugang prüfen
+### Phase 2: Check Jira access
 
-Siehe `jira/_common.md` (Jira access).
+See `jira/_common.md` (Jira access).
 
-### Phase 3: Request Type und Pflichtfelder bestimmen
+### Phase 3: Determine request type and required fields
 
-**Standard-Projekt:** `PITOPS` (Platforms and IT Operation)
+**Default project:** `PITOPS` (Platforms and IT Operation)
 **Service Desk ID:** `5`
 
-**Request Types** (häufigste — bei Unklarheit User fragen):
+**Request types** (most common — ask the user when unclear):
 
-| Request Type | ID | Wann verwenden |
-|--------------|-----|----------------|
-| Service Request Platform | `657` | Standard für Platform-Anfragen, Investigation, Support |
-| Platform Incident | `153` | Produktions-Störung, Ausfall |
-| Change Request | `155` | Geplante Änderung |
-| Update Request | `154` | Update/Patch-Anfrage |
-| Service Request | `149` | Allgemeine Service-Anfrage |
-| Internal | — (via REST API 2) | Internes Ticket, kein Service Desk |
+| Request Type | ID | When to use |
+|--------------|-----|-------------|
+| Service Request Platform | `657` | Default for platform requests, investigation, support |
+| Platform Incident | `153` | Production incident / outage |
+| Change Request | `155` | Planned change |
+| Update Request | `154` | Update/patch request |
+| Service Request | `149` | General service request |
+| Internal | — (via REST API 2) | Internal ticket, not Service Desk |
 
-**Default:** `657` (Service Request Platform), wenn aus Kontext keine andere Kategorie klar ist.
+**Default:** `657` (Service Request Platform) when no other category is clear from context.
 
-**Pflichtfelder für Request Type 657** (Service Request Platform):
+**Required fields for request type 657** (Service Request Platform):
 
-| Feld | Field ID | Format | Beispiel |
-|------|----------|--------|----------|
-| Summary | `summary` | string, max ~255 Zeichen | `dbamq08.pd.tp.nil - FS corruption alert` |
-| Description | `description` | string (**Jira Wiki Markup**) | Detaillierte Beschreibung |
+| Field | Field ID | Format | Example |
+|-------|----------|--------|---------|
+| Summary | `summary` | string, max ~255 chars | `dbamq08.pd.tp.nil - FS corruption alert` |
+| Description | `description` | string (**Jira Wiki Markup**) | Detailed description |
 | Environment | `customfield_12929` | multiselect (array) | `[{"id": "13339"}]` = Productive |
 | Platform | `customfield_12930` | select | `{"id": "13345"}` = Transporeon |
 | Component/s | `components` | array | `[{"id": "20471"}]` = Storage |
 
-**Environment-Werte:**
+**Environment values:**
 
 | Label | ID |
 |-------|-----|
@@ -97,7 +97,7 @@ Siehe `jira/_common.md` (Jira access).
 | HQ / Enterprise | `13343` |
 | Other | `13344` |
 
-**Platform-Werte:**
+**Platform values:**
 
 | Label | ID |
 |-------|-----|
@@ -109,7 +109,7 @@ Siehe `jira/_common.md` (Jira access).
 | All | `13359` |
 | Other | `13349` |
 
-**Component-Werte** (Auswahl — bei Unklarheit User fragen oder aus Kontext ableiten):
+**Component values** (selection — ask the user when unclear, or derive from context):
 
 | Label | ID |
 |-------|-----|
@@ -121,21 +121,21 @@ Siehe `jira/_common.md` (Jira access).
 | Monitoring | `23874` |
 | Server Hardware | `14896` |
 | Other | `14894` |
-| … | weitere via API abrufbar |
+| … | more via API |
 
-**Feldwerte aus Kontext ableiten:**
+**Derive field values from context:**
 
-- Fehlermeldung auf Produktions-Server → Environment: Productive
-- Hostname enthält `.pd.` → meist Productive
-- DB/PostgreSQL/MySQL-Thema → Component: Database
-- Filesystem/Disk → Component: Storage
-- Bei Unsicherheit → **User fragen**, nicht raten
+- Error on a production server → Environment: Productive
+- Hostname contains `.pd.` → usually Productive
+- DB/PostgreSQL/MySQL topic → Component: Database
+- Filesystem/disk → Component: Storage
+- When unsure → **ask the user**, do not guess
 
-### Phase 4: Ticket-Entwurf zeigen und bestätigen lassen (Pflicht)
+### Phase 4: Show ticket draft and obtain confirmation (required)
 
-**Immer vor dem Erstellen** den vollständigen Entwurf zeigen und mit **`AskQuestion`** auf Bestätigung warten.
+**Always before creating**, show the full draft and wait for confirmation via **`AskQuestion`** (or the same numbered options in chat if AskQuestion is unavailable).
 
-**Nicht automatisch erstellen** — erst nach expliziter Bestätigung.
+**Do not create automatically** — only after explicit confirmation.
 
 ```markdown
 ## Ticket draft
@@ -156,23 +156,23 @@ Siehe `jira/_common.md` (Jira access).
 Create this ticket in Jira?
 ```
 
-**AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung):
+**AskQuestion** (required — no implicit continuation): Prefer `AskQuestion` with the options below. If that tool is unavailable, present the **same numbered options in chat** and wait for an explicit choice. Do **not** proceed without confirmation.
 
 > Create this Jira ticket?
 
-Optionen:
+Options:
 
-1. **Yes, create ticket** — Ticket anlegen
-2. **Edit first** — User gibt Korrekturen, Entwurf anpassen, erneut bestätigen
-3. **Cancel** — Nichts erstellen
+1. **Yes, create ticket** — Create the ticket
+2. **Edit first** — User provides corrections; adjust draft and confirm again
+3. **Cancel** — Create nothing
 
-Bei **Cancel**: Kurz bestätigen, dass kein Ticket erstellt wurde.
+On **Cancel**: Briefly confirm that no ticket was created.
 
-### Phase 5: Ticket erstellen (nur nach Bestätigung)
+### Phase 5: Create ticket (only after confirmation)
 
-**Formatierung:** Siehe `jira/_common.md` (Content formatting — Jira). Summary plain text; Description **immer Jira Wiki Markup**; Payload via `json.dumps` oder MCP-JSON-Args.
+**Formatting:** See `jira/_common.md` (Content formatting — Jira). Summary plain text; Description **always Jira Wiki Markup**; payload via `json.dumps` or MCP JSON args.
 
-**Service Desk API** (bevorzugt für Request Types):
+**Service Desk API** (preferred for request types):
 
 ```bash
 source ~/.cursor/.env
@@ -198,7 +198,7 @@ PYEOF
 )"
 ```
 
-**Fallback — REST API 2** (für Issue Types ohne Service Desk, z.B. Task, Internal):
+**Fallback — REST API 2** (for issue types without Service Desk, e.g. Task, Internal):
 
 ```bash
 curl -s -w "\nHTTP_CODE:%{http_code}\n" -X POST \
@@ -220,7 +220,7 @@ PYEOF
 )"
 ```
 
-**Issue Type IDs** (REST API 2 Fallback):
+**Issue type IDs** (REST API 2 fallback):
 
 | Type | ID |
 |------|-----|
@@ -228,12 +228,12 @@ PYEOF
 | Task | `3` |
 | Internal | `11000` |
 
-Bei HTTP 201: Erfolg — `issueKey` aus Response extrahieren.
-Bei Fehler: HTTP-Code und Fehlermeldung (ohne Token) melden. Fehlende Pflichtfelder identifizieren und User erneut fragen.
+On HTTP 201: success — extract `issueKey` from the response.
+On error: report HTTP status and message (without token). Identify missing required fields and ask the user again.
 
-### Phase 6: Ergebnis melden
+### Phase 6: Report result
 
-Bei Erfolg:
+On success:
 
 ```markdown
 ## Ticket created
@@ -245,24 +245,24 @@ Bei Erfolg:
 | URL | <JIRA_URL>/browse/<KEY> |
 ```
 
-- Ticket-Key und Browse-URL
-- Kurze Bestätigung
-- Hinweis: `/jira read <key>` · `/jira comment <key>`
+- Ticket key and browse URL
+- Brief confirmation
+- Note: `/jira read <key>` · `/jira comment <key>`
 
-Bei Abbruch:
+On cancel:
 
-- Kurz bestätigen, dass kein Ticket erstellt wurde
+- Briefly confirm that no ticket was created
 
 ---
 
-## Description — Best Practices
+## Description — best practices
 
-1. **Problem statement**: Was ist das Problem / was wird angefragt?
-2. **Context**: Betroffene Systeme, Hostnamen, Umgebung
-3. **Details**: Fehlermeldungen, Logs, Zeitpunkt (wörtlich zitieren)
-4. **Impact**: Auswirkung auf Nutzer/Services (falls bekannt)
-5. **Steps taken**: Was wurde bereits unternommen (falls aus Kontext bekannt)
-6. **Expected outcome**: Was soll das Ticket erreichen?
+1. **Problem statement**: What is wrong / what is requested?
+2. **Context**: Affected systems, hostnames, environment
+3. **Details**: Error messages, logs, timestamps (quote verbatim)
+4. **Impact**: Effect on users/services (if known)
+5. **Steps taken**: What was already tried (if known from context)
+6. **Expected outcome**: What the ticket should achieve
 
 **Template (Wiki Markup):**
 
@@ -293,14 +293,14 @@ h2. Expected Outcome
 
 ---
 
-## Fehlerbehandlung
+## Error handling
 
-| Problem | Aktion |
+| Problem | Action |
 |---------|--------|
-| Unklarer Ticket-Inhalt | AskQuestion — nicht raten |
-| Pflichtfelder fehlen | User fragen, nicht mit Defaults füllen |
-| User bricht ab | Bestätigen, nichts erstellen |
-| Auth fehlgeschlagen | Credentials prüfen |
-| Validation error (400) | Fehlende/ungültige Felder identifizieren, User fragen |
-| Secrets im Entwurf | Warnen, entfernen, erneut bestätigen |
-| Duplikat-Verdacht | User warnen wenn ähnliches Ticket im Kontext erwähnt wurde |
+| Unclear ticket content | AskQuestion (or chat options) — do not guess |
+| Required fields missing | Ask the user; do not fill with defaults |
+| User cancels | Confirm; create nothing |
+| Auth failed | Check credentials |
+| Validation error (400) | Identify missing/invalid fields; ask the user |
+| Secrets in draft | Warn, remove, confirm again |
+| Suspected duplicate | Warn if a similar ticket was mentioned in context |

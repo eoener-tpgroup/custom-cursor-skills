@@ -2,7 +2,7 @@
 
 Loaded by `/jira comment …` after `jira/_common.md`. Do not run as a standalone command.
 
-Setzt einen **Kommentar** auf ein bestehendes Jira-Ticket. Der Kommentar-Inhalt kommt entweder aus dem User-Prompt oder wird aus dem **bisherigen Chat-Kontext** abgeleitet.
+Posts a **comment** on an existing Jira ticket. Comment content comes from the user prompt or is derived from **chat context**.
 
 **Invocation:** `/jira comment <ticket-key> [comment text]`
 
@@ -16,16 +16,16 @@ Wiki Markup, security, and auth: see `jira/_common.md`.
 
 ---
 
-## ⚠️ Pflichtargument: Ticket-Key
+## ⚠️ Required argument: ticket key
 
-**Ohne Ticket-Key sofort abbrechen.** Kein Kommentar posten, kein Raten, keine Alternativen anbieten.
+**Abort immediately without a ticket key.** Do not post a comment, do not guess, do not offer alternatives.
 
 ```
-❌ /jira comment                 → ABBRECHEN
-❌ /jira comment fix this        → ABBRECHEN (kein gültiger Key)
-❌ /jira comment 123456          → ABBRECHEN (kein Projekt-Präfix)
-✅ /jira comment PITOPS-144486  → Kommentar aus Kontext ableiten
-✅ /jira comment PITOPS-144486 Investigation complete, FS check passed → Kommentar aus Prompt
+❌ /jira comment                 → ABORT
+❌ /jira comment fix this        → ABORT (not a valid key)
+❌ /jira comment 123456          → ABORT (no project prefix)
+✅ /jira comment PITOPS-144486  → Derive comment from context
+✅ /jira comment PITOPS-144486 Investigation complete, FS check passed → Comment from prompt
 ```
 
 **Abort message** (report exactly as follows):
@@ -34,57 +34,57 @@ Wiki Markup, security, and auth: see `jira/_common.md`.
 > Usage: `/jira comment <ticket-key> [comment text]`
 > Example: `/jira comment PITOPS-144486 Root cause identified and fix deployed.`
 
-Der Ticket-Key ist das **erste Argument** nach dem Subcommand. Optionaler Freitext danach = expliziter Kommentar-Inhalt.
+The ticket key is the **first argument** after the subcommand. Optional free text after that = explicit comment content.
 
 ---
 
 ## Workflow
 
-### Phase 1: Argument validieren
+### Phase 1: Validate argument
 
-1. Ticket-Key aus dem User-Prompt extrahieren (erstes Token nach `/jira comment`)
-2. Normalisieren und Format prüfen — siehe `jira/_common.md` (Ticket key rules)
-3. Restlichen Text nach dem Key als **expliziten Kommentar** behandeln (falls vorhanden)
-4. Wenn ungültiger Key → **sofort abbrechen** (Abort message)
+1. Extract the ticket key from the user prompt (first token after `/jira comment`)
+2. Normalize and validate format — see `jira/_common.md` (Ticket key rules)
+3. Treat remaining text after the key as the **explicit comment** (if present)
+4. If the key is invalid → **abort immediately** (abort message)
 
-### Phase 2: Kommentar-Inhalt ermitteln
+### Phase 2: Determine comment content
 
-**Zwei Quellen** (Priorität):
+**Two sources** (priority):
 
-| Priorität | Quelle | Wann |
-|-----------|--------|------|
-| 1 | **Expliziter Text** im User-Prompt nach dem Ticket-Key | User hat Kommentar direkt angegeben |
-| 2 | **Chat-Kontext** | Kein expliziter Text — aus bisheriger Konversation ableiten |
+| Priority | Source | When |
+|----------|--------|------|
+| 1 | **Explicit text** in the user prompt after the ticket key | User provided the comment directly |
+| 2 | **Chat context** | No explicit text — derive from the conversation so far |
 
-**Aus Kontext ableiten — Regeln:**
+**Derive from context — rules:**
 
-1. Den **Kern der letzten Arbeit/Diskussion** zusammenfassen (Investigation, Fix, Status-Update, etc.)
-2. Nur Informationen einbeziehen, die **für Jira-Teilnehmer relevant** sind
-3. Keine internen Tool-/Agent-Referenzen, keine Meta-Kommentare über Automatisierung
-4. Professioneller, sachlicher Ton — als hätte der User persönlich geschrieben
-5. Strukturiert in **Jira Wiki Markup** formatieren (siehe `jira/_common.md`) — bestehende Ticket-Kommentare nicht als Markdown spiegeln
-6. Keine Commit-/Branch-Konventionen aus dem Agency-Agent übernehmen — dieser Subcommand postet nur einen Kommentar
+1. Summarize the **core of the latest work/discussion** (investigation, fix, status update, etc.)
+2. Include only information **relevant to Jira participants**
+3. No internal tool/agent references, no meta-comments about automation
+4. Professional, factual tone — as if the user wrote it personally
+5. Format as **Jira Wiki Markup** (see `jira/_common.md`) — do not mirror existing ticket comments as Markdown
+6. Do not adopt commit/branch conventions from the agency agent — this subcommand only posts a comment
 
-**Bei Unklarheiten → User fragen (Pflicht):**
+**When unclear → ask the user (required):**
 
-Wenn der gewünschte Kommentar-Inhalt **nicht eindeutig** ist (weder aus Prompt noch aus Kontext), **`AskQuestion`** nutzen (Pflicht — kein Fallback auf Chat-Fragen):
+If the desired comment content is **not clear** (neither from prompt nor context), prefer **`AskQuestion`**. If AskQuestion is unavailable, present the **same numbered options in chat** and wait — do not guess, and do not post without confirmation.
 
-Frage:
+Question:
 
 > What should the Jira comment say?
 
-Optionen (via AskQuestion):
+Options:
 
-1. **Post investigation/status summary from context** — Zusammenfassung der bisherigen Arbeit
-2. **Post a short status update** — Kurzes Status-Update (User liefert Text im Freitext-Feld)
-3. **Let me specify the comment** — User schreibt den exakten Kommentar
-4. **Cancel** — Abbrechen, nichts posten
+1. **Post investigation/status summary from context** — Summary of work so far
+2. **Post a short status update** — Short status update (user supplies text)
+3. **Let me specify the comment** — User writes the exact comment
+4. **Cancel** — Abort; post nothing
 
-**Nicht posten**, solange der Kommentar-Inhalt nicht bestätigt ist, wenn Unklarheit besteht.
+**Do not post** while comment content remains unconfirmed when there was ambiguity.
 
-### Phase 3: Ticket verifizieren
+### Phase 3: Verify ticket
 
-Vor dem Posten prüfen, dass das Ticket existiert:
+Before posting, verify the ticket exists:
 
 ```bash
 source ~/.cursor/.env
@@ -93,19 +93,19 @@ curl -s -o /dev/null -w "%{http_code}" \
   "$JIRA_URL/rest/api/2/issue/<TICKET-KEY>"
 ```
 
-| HTTP-Code | Aktion |
+| HTTP code | Action |
 |-----------|--------|
-| 200 | Fortfahren |
-| 404 | Abbrechen: Ticket nicht gefunden |
-| 401/403 | Abbrechen: Auth-Problem |
+| 200 | Continue |
+| 404 | Abort: ticket not found |
+| 401/403 | Abort: auth problem |
 
-Optional: Ticket-Kurzinfo laden (Summary, Status) für Bestätigung an User.
+Optional: load short ticket info (Summary, Status) for the confirmation shown to the user.
 
-### Phase 4: Kommentar-Entwurf zeigen und bestätigen lassen (Pflicht)
+### Phase 4: Show comment draft and obtain confirmation (required)
 
-**Immer vor dem Posten** den vollständigen Kommentar-Entwurf zeigen und mit **`AskQuestion`** auf Bestätigung warten.
+**Always before posting**, show the full comment draft and wait for confirmation via **`AskQuestion`** (or the same numbered options in chat if AskQuestion is unavailable).
 
-**Nicht automatisch posten** — erst nach expliziter Bestätigung.
+**Do not post automatically** — only after explicit confirmation.
 
 ```markdown
 ## Comment draft for <TICKET-KEY>
@@ -116,23 +116,23 @@ Optional: Ticket-Kurzinfo laden (Summary, Status) für Bestätigung an User.
 Post this comment to <TICKET-KEY>?
 ```
 
-**AskQuestion** (Pflicht — kein Fallback auf implizite Fortsetzung):
+**AskQuestion** (required — no implicit continuation): Prefer `AskQuestion` with the options below. If that tool is unavailable, present the **same numbered options in chat** and wait for an explicit choice. Do **not** proceed without confirmation.
 
 > Post this comment to <TICKET-KEY>?
 
-Optionen:
+Options:
 
-1. **Yes, post comment** — Kommentar absenden
-2. **Edit first** — User gibt Korrekturen, Entwurf anpassen, erneut bestätigen
-3. **Cancel** — Nichts posten
+1. **Yes, post comment** — Submit the comment
+2. **Edit first** — User provides corrections; adjust draft and confirm again
+3. **Cancel** — Post nothing
 
-Bei **Cancel**: Kurz bestätigen, dass nichts gepostet wurde.
+On **Cancel**: Briefly confirm that nothing was posted.
 
-### Phase 5: Kommentar posten (nur nach Bestätigung)
+### Phase 5: Post comment (only after confirmation)
 
-**Formatierung:** Siehe `jira/_common.md` — **immer Jira Wiki Markup**.
+**Formatting:** See `jira/_common.md` — **always Jira Wiki Markup**.
 
-**Priorität:** MCP first, then REST (siehe `_common`).
+**Priority:** MCP first, then REST (see `_common`).
 
 **REST API:**
 
@@ -150,27 +150,27 @@ PYEOF
 )"
 ```
 
-Bei HTTP 201/200: Erfolg.
-Bei Fehler: HTTP-Code und Fehlermeldung (ohne Token) melden.
+On HTTP 201/200: success.
+On error: report HTTP status and message (without token).
 
-### Phase 6: Ergebnis melden
+### Phase 6: Report result
 
-Bei Erfolg:
+On success:
 
-- Bestätigung: „Comment posted to `<TICKET-KEY>`"
-- Link zum Ticket: `<JIRA_URL>/browse/<TICKET-KEY>`
-- Kommentar-ID falls aus Response verfügbar
-- Geposteten Kommentar nochmals kurz anzeigen (erste ~200 Zeichen)
+- Confirmation: “Comment posted to `<TICKET-KEY>`”
+- Ticket link: `<JIRA_URL>/browse/<TICKET-KEY>`
+- Comment ID if available from the response
+- Briefly show the posted comment again (first ~200 characters)
 
-Bei Abbruch:
+On cancel:
 
-- Kurz bestätigen, dass nichts gepostet wurde
+- Briefly confirm that nothing was posted
 
 ---
 
-## Kommentar-Templates (Wiki Markup)
+## Comment templates (Wiki Markup)
 
-### Status-Update
+### Status update
 
 ```text
 h2. Status Update
@@ -182,7 +182,7 @@ h2. Status Update
 * <step 2>
 ```
 
-### Investigation Summary
+### Investigation summary
 
 ```text
 h2. Investigation Summary
@@ -199,7 +199,7 @@ h2. Investigation Summary
 * <action 1>
 ```
 
-### Fix Deployed
+### Fix deployed
 
 ```text
 h2. Fix Applied
@@ -213,15 +213,15 @@ Related: <MR/PR link if applicable>
 
 ---
 
-## Fehlerbehandlung
+## Error handling
 
-| Problem | Aktion |
+| Problem | Action |
 |---------|--------|
-| Kein Ticket-Key | Sofort abbrechen (Abort message) |
-| Ungültiges Key-Format | Abort message |
-| Ticket nicht gefunden | Key prüfen lassen |
-| Kommentar-Inhalt unklar | AskQuestion — nicht raten |
-| User bricht ab | Bestätigen, nichts posten |
-| Auth fehlgeschlagen | Credentials prüfen |
-| Secrets im Entwurf | Warnen, aus Kommentar entfernen, erneut bestätigen |
-| Permission denied (403) | User informieren — evtl. kein Kommentar-Recht |
+| No ticket key | Abort immediately (abort message) |
+| Invalid key format | Abort message |
+| Ticket not found | Have the user check the key |
+| Unclear comment content | AskQuestion (or chat options) — do not guess |
+| User cancels | Confirm; post nothing |
+| Auth failed | Check credentials |
+| Secrets in draft | Warn, remove from comment, confirm again |
+| Permission denied (403) | Inform the user — may lack comment permission |

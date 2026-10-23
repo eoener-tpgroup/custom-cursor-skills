@@ -140,7 +140,7 @@ git diff origin/<target-branch>..HEAD --stat
 
 ### Phase 5: Show draft and obtain confirmation (required)
 
-**Before `git push` and MR/PR creation** show the full plan and wait for confirmation with **`AskQuestion`**.
+**Before `git push` and MR/PR creation** show the full plan and wait for confirmation with **`AskQuestion`** (or the same numbered options in chat if AskQuestion is unavailable).
 
 **Do not automatically push or create MR/PR** — only after explicit confirmation.
 
@@ -194,7 +194,7 @@ GitLab skeleton:
 2. Create MR via `glab` or GitLab MCP
 ```
 
-**AskQuestion** (required — no fallback to implicit continuation) — wording matches platform:
+**AskQuestion** (required — no implicit continuation) — wording matches platform. Prefer `AskQuestion` with the options below. If that tool is unavailable, present the **same numbered options in chat** and wait for an explicit choice. Do **not** proceed without confirmation.
 
 > Proceed with push and pull request creation?  
 > *(GitLab: “Proceed with push and merge request creation?”)*

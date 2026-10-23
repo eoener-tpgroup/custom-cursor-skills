@@ -297,7 +297,7 @@ Process **only actionable, open review items**. Classify comments:
 
 ### Phase 5: Show fix plan and get confirmation (required)
 
-**Before any code change**, show the full fix plan and all generated text and wait for confirmation via **`AskQuestion`**.
+**Before any code change**, show the full fix plan and all generated text and wait for confirmation via **`AskQuestion`** (or the same numbered options in chat if AskQuestion is unavailable).
 
 **Do not apply fixes automatically** — only after explicit confirmation.
 
@@ -412,7 +412,7 @@ fix(review): address MR !<id> review comments
 3. *(Later, separate confirmation)* Commit / push / post MR comment
 ```
 
-**AskQuestion** (required — no fallback to implicit continuation):
+**AskQuestion** (required — no implicit continuation): Prefer `AskQuestion` with the options below. If that tool is unavailable, present the **same numbered options in chat** and wait for an explicit choice. Do **not** proceed without confirmation.
 
 > Proceed with applying these fixes?
 
@@ -532,7 +532,7 @@ Output **exactly one** skeleton below — the branch that matches the detected p
 
 ### Phase 8: Next steps — show text and get confirmation (required)
 
-**After the summary**, show the planned **commit message** and **MR/PR comment** in full again and wait for confirmation via **`AskQuestion`**.
+**After the summary**, show the planned **commit message** and **MR/PR comment** in full again and wait for confirmation via **`AskQuestion`** (or the same numbered options in chat if AskQuestion is unavailable).
 
 **Do not commit, push, or post MR/PR comments automatically** — only after explicit confirmation.
 
@@ -596,7 +596,7 @@ fix(review): address MR !<id> review comments
 - `path/to/file.ts` — <description>
 ```
 
-**AskQuestion** (required — no fallback to implicit continuation):
+**AskQuestion** (required — no implicit continuation): Prefer `AskQuestion` with the options below. If that tool is unavailable, present the **same numbered options in chat** and wait for an explicit choice. Do **not** proceed without confirmation.
 
 > How should the fixes be handled next?
 

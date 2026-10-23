@@ -2,7 +2,7 @@
 
 Loaded by `/jira read …` after `jira/_common.md`. Do not run as a standalone command.
 
-Lädt ein Jira-Ticket anhand des Ticket-Keys und gibt eine **strukturierte, vollständige Zusammenfassung** zurück — inkl. Status, Felder, Beschreibung und Kommentare.
+Loads a Jira ticket by key and returns a **structured, complete summary** — including status, fields, description, and comments.
 
 **Invocation:** `/jira read <ticket-key>`
 
@@ -10,16 +10,16 @@ Ticket content (summary, description, comments) is quoted **as-is** from Jira �
 
 ---
 
-## ⚠️ Pflichtargument: Ticket-Key
+## ⚠️ Required argument: ticket key
 
-**Ohne Ticket-Key sofort abbrechen.** Kein Ticket laden, kein Raten, keine Alternativen anbieten.
+**Abort immediately without a ticket key.** Do not load a ticket, do not guess, do not offer alternatives.
 
 ```
-❌ /jira read                    → ABBRECHEN
-❌ /jira read read               → ABBRECHEN (kein gültiger Key)
-❌ /jira read 123456             → ABBRECHEN (kein Projekt-Präfix)
+❌ /jira read                    → ABORT
+❌ /jira read read               → ABORT (not a valid key)
+❌ /jira read 123456             → ABORT (no project prefix)
 ✅ /jira read PITOPS-144486      → Ticket PITOPS-144486
-✅ /jira read pitops-144486      → Normalisieren zu PITOPS-144486
+✅ /jira read pitops-144486      → Normalize to PITOPS-144486
 ```
 
 **Abort message** (report exactly as follows):
@@ -28,25 +28,25 @@ Ticket content (summary, description, comments) is quoted **as-is** from Jira �
 > Usage: `/jira read <ticket-key>`
 > Example: `/jira read PITOPS-144486`
 
-Der Ticket-Key steht im User-Prompt **nach dem Subcommand** (z.B. `/jira read PITOPS-144486`).
+The ticket key is in the user prompt **after the subcommand** (e.g. `/jira read PITOPS-144486`).
 
 ---
 
 ## Workflow
 
-### Phase 1: Argument validieren
+### Phase 1: Validate argument
 
-1. Ticket-Key aus dem User-Prompt extrahieren (Text nach `/jira read`)
-2. Normalisieren und Format prüfen — siehe `jira/_common.md` (Ticket key rules)
-3. Wenn ungültig → **sofort abbrechen** (Abort message)
+1. Extract the ticket key from the user prompt (text after `/jira read`)
+2. Normalize and validate format — see `jira/_common.md` (Ticket key rules)
+3. If invalid → **abort immediately** (abort message)
 
-### Phase 2: Jira-Zugang prüfen
+### Phase 2: Check Jira access
 
-Siehe `jira/_common.md` (Jira access).
+See `jira/_common.md` (Jira access).
 
-### Phase 3: Ticket laden
+### Phase 3: Load ticket
 
-**REST API (Fallback):**
+**REST API (fallback):**
 
 ```bash
 source ~/.cursor/.env
@@ -54,32 +54,32 @@ curl -s -H "Authorization: Bearer $JIRA_TOKEN" \
   "$JIRA_URL/rest/api/2/issue/<TICKET-KEY>?expand=renderedFields,names,changelog"
 ```
 
-Zusätzlich Kommentare laden (falls nicht vollständig in `fields.comment`):
+Also load comments if not fully present in `fields.comment`:
 
 ```bash
 curl -s -H "Authorization: Bearer $JIRA_TOKEN" \
   "$JIRA_URL/rest/api/2/issue/<TICKET-KEY>/comment?orderBy=created&maxResults=100"
 ```
 
-**Zu ladende Daten (Pflicht):**
+**Data to load (required):**
 
-| Daten | Zweck |
-|-------|-------|
-| Key, Summary, Description | Kerninhalt |
-| Status, Resolution | Aktueller Stand |
-| Issue Type, Priority | Klassifizierung |
-| Reporter, Assignee, Created, Updated | Metadaten |
-| Components, Labels | Zuordnung |
-| Custom Fields (falls vorhanden) | Environment, Platform, Request Type, etc. |
-| Comments (alle) | Vollständiger Kommentarverlauf |
-| Changelog (letzte 20 Einträge) | Status-/Feldänderungen |
+| Data | Purpose |
+|------|---------|
+| Key, Summary, Description | Core content |
+| Status, Resolution | Current state |
+| Issue Type, Priority | Classification |
+| Reporter, Assignee, Created, Updated | Metadata |
+| Components, Labels | Assignment |
+| Custom fields (when present) | Environment, Platform, Request Type, etc. |
+| Comments (all) | Full comment history |
+| Changelog (last 20 entries) | Status/field changes |
 
-Bei HTTP 404: Ticket nicht gefunden — Key prüfen lassen.
-Bei anderen Fehlern: HTTP-Status und Fehlermeldung (ohne Token) an User melden.
+On HTTP 404: ticket not found — have the user check the key.
+On other errors: report HTTP status and message (without token).
 
-### Phase 4: Ticket zusammenfassen
+### Phase 4: Summarize ticket
 
-Strukturierten Bericht ausgeben:
+Output a structured report:
 
 ```markdown
 # Jira Ticket: <KEY> — <summary>
@@ -124,32 +124,32 @@ Strukturierten Bericht ausgeben:
 - Browse: <JIRA_URL>/browse/<KEY>
 ```
 
-**Regeln für die Zusammenfassung:**
+**Summary rules:**
 
-1. **Vollständig**: Alle Kommentare einbeziehen, nicht nur die letzten
-2. **Chronologisch**: Kommentare nach Erstellungsdatum sortiert
-3. **Keine Interpretation**: Beschreibung und Kommentare wörtlich wiedergeben
-4. **Lange Inhalte**: Bei sehr langen Beschreibungen/Kommentaren (>2000 Zeichen) gekürzt mit Hinweis „(truncated — full content in Jira)"
-5. **Attachments**: Nur auflisten (Dateiname, Autor, Datum) — nicht herunterladen, es sei denn der User fordert es explizit
+1. **Complete**: Include all comments, not only the latest
+2. **Chronological**: Sort comments by creation date
+3. **No interpretation**: Quote description and comments verbatim
+4. **Long content**: For very long descriptions/comments (>2000 characters), truncate with “(truncated — full content in Jira)”
+5. **Attachments**: List only (filename, author, date) — do not download unless the user explicitly asks
 
-### Phase 5: Ergebnis melden
+### Phase 5: Report result
 
-- Ticket-URL (`<JIRA_URL>/browse/<KEY>`)
-- Kurze Ein-Satz-Zusammenfassung des Ticket-Inhalts
-- Hinweis auf verwandte Subcommands:
-  - `/jira comment <key>` — Kommentar hinzufügen
-  - `/jira create` — Neues Ticket erstellen
+- Ticket URL (`<JIRA_URL>/browse/<KEY>`)
+- One-sentence summary of the ticket content
+- Related subcommands:
+  - `/jira comment <key>` — add a comment
+  - `/jira create` — create a new ticket
 
 ---
 
-## Fehlerbehandlung
+## Error handling
 
-| Problem | Aktion |
+| Problem | Action |
 |---------|--------|
-| Kein Ticket-Key | Sofort abbrechen (Abort message) |
-| Ungültiges Key-Format | Abort message, Beispiel geben |
-| Ticket nicht gefunden (404) | Key und Projekt prüfen lassen |
-| Auth fehlgeschlagen (401/403) | Credentials in `~/.cursor/.env` prüfen |
-| MCP nicht authentifiziert | Auth anleiten, REST-Fallback versuchen |
-| Netzwerkfehler | Fehler melden, Retry anbieten |
-| Ticket ohne Beschreibung/Kommentare | Felder als „(empty)" markieren, nicht abbrechen |
+| No ticket key | Abort immediately (abort message) |
+| Invalid key format | Abort message; give an example |
+| Ticket not found (404) | Have the user check key and project |
+| Auth failed (401/403) | Check credentials in `~/.cursor/.env` |
+| MCP not authenticated | Guide auth; try REST fallback |
+| Network error | Report error; offer retry |
+| Ticket with empty description/comments | Mark fields as “(empty)”; do not abort |
