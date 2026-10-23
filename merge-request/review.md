@@ -1,13 +1,13 @@
----
-name: merge-request-review
-description: Intensive code review of a merge request including existing MR comments. MR ID optional (/merge-request-review [id] [focus]) — from argument, branch, or chat context.
----
+# Merge Request — subcommand: review
 
-# Merge Request Review
+Loaded by `/merge-request review …` after `merge-request/_common.md`. Do not run as a standalone command.
+
 
 Analyzes a merge/pull request by MR ID and performs an **intensive, structured code review**.
 
-Triggered manually via `/merge-request-review [id] [focus]`.
+**Invocation:** `/merge-request review [id] [focus]`
+
+Platform detection, shared Content formatting, Git Safety, and MR ID resolution: see `merge-request/_common.md`.
 
 ## ⚙️ Arguments & context
 
@@ -22,7 +22,7 @@ Everything after the MR ID (if present) is optional **Focus** and may contain sp
 
 | Priority | Source | When |
 |----------|--------|------|
-| 1 | **Explicit ID** in user prompt | First valid token after `/merge-request-review` (`42`, `!42`, `#42`) |
+| 1 | **Explicit ID** in user prompt | First valid token after `/merge-request review` (`42`, `!42`, `#42`) |
 | 2 | **Chat context** | MR URL, `!42`, `MR 42`, `PR #42` in the conversation |
 | 3 | **Current branch** | Find open MR/PR for local branch via `gh`/`glab`/GitLab MCP |
 
@@ -40,11 +40,11 @@ Everything after the MR ID (if present) is optional **Focus** and may contain sp
 3. If multiple MRs are possible (e.g. several URLs in chat) → **ask the user**
 
 ```
-✅ /merge-request-review 42
-✅ /merge-request-review !42 focus on SQL injection and auth bypass
-✅ /merge-request-review security review for webhook handler
-✅ /merge-request-review                    → ID from branch or chat context
-❌ /merge-request-review review             → no valid ID token, no context → abort
+✅ /merge-request review 42
+✅ /merge-request review !42 focus on SQL injection and auth bypass
+✅ /merge-request review security review for webhook handler
+✅ /merge-request review                    → ID from branch or chat context
+❌ /merge-request review review             → no valid ID token, no context → abort
 ```
 
 ### Missing or invalid MR ID
@@ -55,16 +55,16 @@ When neither argument nor context nor branch search yields a unique MR ID:
 2. If unanswered → **abort** with:
 
 > This command requires a merge request ID (or enough context to identify one).
-> Usage: `/merge-request-review [id] [focus]`
-> Example: `/merge-request-review 42 security and error handling`
+> Usage: `/merge-request review [id] [focus]`
+> Example: `/merge-request review 42 security and error handling`
 
-The MR ID appears in the user prompt **after the command name** (e.g. `/merge-request-review 42`). Optional focus follows after that.
+The MR ID appears in the user prompt **after the command name** (e.g. `/merge-request review 42`). Optional focus follows after that.
 
 ---
 
 ## Output language
 
-**This command definition is in English.** **Always write all user-facing output in English** — status messages, review reports, error messages, questions to the user, and MR/PR comments. This applies even if the user writes in another language.
+See router / `_common`: all user-facing output in **English**.
 
 ## Agency agent
 
@@ -234,7 +234,7 @@ replacement code
 
 ### Phase 1: Validate arguments & resolve MR ID
 
-1. Parse user prompt after `/merge-request-review`
+1. Parse user prompt after `/merge-request review`
 2. Check first token: numeric IID/PR number (`42`, `!42`, `#42`) → **MR ID**
 3. Remaining text → **Focus** (review emphasis, questions, constraints)
 4. If no valid ID token: check **chat context** and **current branch** (see above)
@@ -244,22 +244,7 @@ replacement code
 
 ### Phase 2: Detect platform and load MR data
 
-**Order is mandatory:** resolve the remote URL **before** choosing a client or loading MR/PR data.
-
-1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
-2. Classify from the URL only:
-
-| Platform | Detection (URL only) | Client next |
-|----------|----------------------|-------------|
-| **GitHub** | URL contains `github.com`, or hostname contains `github` (e.g. `github.mycompany.com`) | `gh` CLI — then check `gh auth status` |
-| **GitLab** | Hostname contains `gitlab` (incl. self-hosted, e.g. `gitlab.office.transporeon.com`) | `glab` **or** GitLab MCP (see client choice below) |
-| **Unknown** | Neither rule matches | **Do not guess** — `AskQuestion` (GitHub vs GitLab) or abort. No probing with `gh`/`glab`/MCP for detection. No “push + manual URL” path |
-
-**Important:** Availability of `gh`, `glab`, or GitLab MCP **must not override the platform**. URL → platform first, then client.
-
-**GitLab client choice:** Whatever is available and authenticated. If **both** work → **prefer `glab`**; otherwise GitLab MCP. Both are not required.
-
-**After detection:** Chat review title and refs use the detected platform only — GitHub → `Code Review: PR #<id>`, `#n`; GitLab → `Code Review: MR !<id>`, `!n` (Phase 7). Optional posts (Phase 8) use that platform’s Markdown only (see **Content formatting — GitLab or GitHub**).
+Detect platform per `merge-request/_common.md`. After detection: chat review title and refs use the detected platform only — GitHub → `Code Review: PR #<id>`, `#n`; GitLab → `Code Review: MR !<id>`, `!n` (Phase 7). Optional posts (Phase 8) use that platform’s Markdown only.
 
 Then load data via the matching subsection below (**GitLab** or **GitHub**).
 
@@ -562,6 +547,6 @@ Posted <n> line comments (Critical: <n>, Major: <n>, …). See threads on the Fi
 
 ## Related commands
 
-- `/merge-request-fix [id] [instructions]` — implement review comments and create fix summary
+- `/merge-request fix [id] [instructions]` — implement review comments and create fix summary
 - `/commit` — commit changes
-- `/merge-request` — create MR/PR
+- `/merge-request create` — create MR/PR

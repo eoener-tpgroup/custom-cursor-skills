@@ -1,13 +1,13 @@
----
-name: merge-request-fix
-description: Applies fixes for open code review comments on a merge request. MR ID optional. Confirmation before fixes and before commit/push via AskQuestion.
----
+# Merge Request — subcommand: fix
 
-# Merge Request Fix
+Loaded by `/merge-request fix …` after `merge-request/_common.md`. Do not run as a standalone command.
+
 
 Reads **code review comments** for a merge/pull request by MR ID, implements **valid, actionable change requests** in the local codebase, and produces a **summary** of what was requested vs. what was fixed.
 
-Triggered manually via `/merge-request-fix [id] [instructions]`.
+**Invocation:** `/merge-request fix [id] [instructions]`
+
+Platform detection, shared Content formatting, Git Safety, and MR ID resolution: see `merge-request/_common.md`.
 
 ## ⚙️ Arguments & context
 
@@ -22,7 +22,7 @@ Everything after the MR ID (if present) is optional **Instructions** text and ma
 
 | Priority | Source | When |
 |----------|--------|------|
-| 1 | **Explicit ID** in the user prompt | First valid token after `/merge-request-fix` (`42`, `!42`, `#42`) |
+| 1 | **Explicit ID** in the user prompt | First valid token after `/merge-request fix` (`42`, `!42`, `#42`) |
 | 2 | **Chat context** | MR URL, `!42`, `MR 42`, `PR #42` in the conversation |
 | 3 | **Current branch** | Find open MR/PR for the local branch via `gh`/`glab`/GitLab MCP |
 
@@ -40,11 +40,11 @@ Everything after the MR ID (if present) is optional **Instructions** text and ma
 3. If multiple MRs are possible → **ask the user**
 
 ```
-✅ /merge-request-fix 42
-✅ /merge-request-fix !42 only fix null-check comments, skip architecture feedback
-✅ /merge-request-fix address @reviewer's SQL injection comment
-✅ /merge-request-fix                    → ID from branch or chat context
-❌ /merge-request-fix fix                → no valid ID token, no context → abort
+✅ /merge-request fix 42
+✅ /merge-request fix !42 only fix null-check comments, skip architecture feedback
+✅ /merge-request fix address @reviewer's SQL injection comment
+✅ /merge-request fix                    → ID from branch or chat context
+❌ /merge-request fix fix                → no valid ID token, no context → abort
 ```
 
 ### Missing or invalid MR ID
@@ -55,16 +55,16 @@ When neither argument, context, nor branch search yields a unique MR ID:
 2. If unanswered → **abort** with:
 
 > This command requires a merge request ID (or enough context to identify one).
-> Usage: `/merge-request-fix [id] [instructions]`
-> Example: `/merge-request-fix 42 only fix critical inline comments`
+> Usage: `/merge-request fix [id] [instructions]`
+> Example: `/merge-request fix 42 only fix critical inline comments`
 
-The MR ID appears in the user prompt **after the command name** (e.g. `/merge-request-fix 42`). Optional instructions follow after that.
+The MR ID appears in the user prompt **after the command name** (e.g. `/merge-request fix 42`). Optional instructions follow after that.
 
 ---
 
 ## Output language
 
-The command definition is in **English**. **Always write all user-facing output in English** — status messages, fix summaries, error messages, questions to the user, and MR/PR comments. This applies even if the user writes in another language.
+See router / `_common`: all user-facing output in **English**.
 
 ## Agency agent
 
@@ -140,7 +140,7 @@ EOF
 
 ### Phase 1: Validate arguments & resolve MR ID
 
-1. Parse user prompt after `/merge-request-fix`
+1. Parse user prompt after `/merge-request fix`
 2. Check first token: numeric IID/PR number (`42`, `!42`, `#42`) → **MR ID**
 3. Remaining text → **Instructions** (scope, priorities, exclusions)
 4. If no valid ID token: check **chat context** and **current branch** (see above)
@@ -150,22 +150,7 @@ EOF
 
 ### Phase 2: Detect platform and load MR data
 
-**Order is mandatory:** resolve the remote URL **before** choosing a client or loading MR/PR data.
-
-1. Read `git remote get-url origin` (fallback: recognizable primary remote from `git remote -v`).
-2. Classify from the URL only:
-
-| Platform | Detection (URL only) | Client next |
-|----------|----------------------|-------------|
-| **GitHub** | URL contains `github.com`, or hostname contains `github` (e.g. `github.mycompany.com`) | `gh` CLI — then check `gh auth status` |
-| **GitLab** | Hostname contains `gitlab` (incl. self-hosted, e.g. `gitlab.office.transporeon.com`) | `glab` **or** GitLab MCP (see client choice below) |
-| **Unknown** | None of the rules match | **Do not guess** — `AskQuestion` (GitHub vs GitLab) or abort. No probing with `gh`/`glab`/MCP for detection. No “push + manual URL” path |
-
-**Important:** Availability of `gh`, `glab`, or GitLab MCP **must not override platform detection**. URL → platform first, then client.
-
-**GitLab client choice:** Whatever is available and authenticated. If **both** work → **prefer `glab`**; otherwise GitLab MCP. Both are not required.
-
-**After detection:** Fix plan, summary, commit footer, and reply drafts use the detected platform only — GitHub → `PR #<id>`, `#n`, GFM; GitLab → `MR !<id>`, `!n`, GitLab Flavored Markdown (Phases 5, 7, 8). See **Content formatting — GitLab or GitHub**.
+Detect platform per `merge-request/_common.md`. After detection: fix plan, summary, commit footer, and reply drafts use the detected platform only — GitHub → `PR #<id>`, `#n`, GFM; GitLab → `MR !<id>`, `!n`, GitLab Flavored Markdown (Phases 5, 7, 8).
 
 Then load data via the matching subsection below (**GitLab** or **GitHub**).
 
@@ -296,7 +281,7 @@ Process **only actionable, open review items**. Classify comments:
 | 💬 **Question** | Follow-up without a clear fix | → Skip, note as “open” in summary |
 | ❌ **Invalid / Out of scope** | Feedback contradicts requirements or is incorrect | → Do not fix, explain in summary |
 | 🤖 **Bot (Bugbot etc.)** | Automated review comment | → Review content, fix only on **valid** finding |
-| 📝 **Review report only** | General review without a concrete fix (e.g. `/merge-request-review` output) | → Extract individual findings and treat as actionable |
+| 📝 **Review report only** | General review without a concrete fix (e.g. `/merge-request review` output) | → Extract individual findings and treat as actionable |
 
 **Priority:**
 
@@ -503,7 +488,7 @@ Output **exactly one** skeleton below — the branch that matches the detected p
 ## Next steps
 1. Review changes (`git diff`)
 2. Commit with `/commit` or manually
-3. Push and update PR (`/merge-request` or `git push`)
+3. Push and update PR (`/merge-request create` or `git push`)
 4. Optional: Reply on PR; on GitHub, resolve review threads for ✅ Fixed findings
 ```
 
@@ -541,7 +526,7 @@ Output **exactly one** skeleton below — the branch that matches the detected p
 ## Next steps
 1. Review changes (`git diff`)
 2. Commit with `/commit` or manually
-3. Push and update MR (`/merge-request` or `git push`)
+3. Push and update MR (`/merge-request create` or `git push`)
 4. Optional: Reply on MR / resolve discussion threads
 ```
 
@@ -650,13 +635,9 @@ On **Summary only** / **Cancel**: Briefly confirm that nothing was committed, pu
 6. **Transparency** — summary must reflect every review item with status
 7. **GitHub: resolve when fixed** — After Option 4 (PR comment), resolve review threads for findings that were implemented; leave others open
 
-## Git Safety Protocol (strict)
+## Git Safety Protocol
 
-- **Never** change `git config`
-- **Never** run destructive Git commands (`push --force`, `reset --hard`, etc.) without explicit user request
-- **Never** skip hooks (`--no-verify`, `--no-gpg-sign`, etc.)
-- **Never** force-push to `main`/`master`
-- **Do not** commit secrets
+See `merge-request/_common.md`.
 
 ## Error handling
 
@@ -677,6 +658,6 @@ On **Summary only** / **Cancel**: Briefly confirm that nothing was committed, pu
 
 ## Related commands
 
-- `/merge-request-review [id] [focus]` — In-depth code review (produce findings)
+- `/merge-request review [id] [focus]` — In-depth code review (produce findings)
 - `/commit` — Commit changes
-- `/merge-request` — Push branch and create/update MR
+- `/merge-request create` — Push branch and create/update MR

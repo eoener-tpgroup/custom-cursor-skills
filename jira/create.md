@@ -1,114 +1,14 @@
----
-name: jira-create
-description: Erstellt ein neues Jira-Ticket. Inhalt aus User-Beschreibung oder Chat-Kontext. Bestätigung vor Erstellung via AskQuestion.
----
+# Jira — subcommand: create
 
-# Jira Create
+Loaded by `/jira create …` after `jira/_common.md`. Do not run as a standalone command.
 
 Erstellt ein **neues Jira-Ticket** in unserem Jira (Transporeon Service Desk, Projekt **PITOPS**). Der Ticket-Inhalt kommt entweder aus dem User-Prompt oder wird aus dem **bisherigen Chat-Kontext** abgeleitet.
 
-Wird manuell via `/jira-create [description]` ausgelöst.
-
-## Output language
-
-**Always write all user-facing output in English** — status messages, confirmation messages, error messages, and questions to the user. This applies even if the user writes in another language or this command definition is in German.
+**Invocation:** `/jira create [description]`
 
 **Jira ticket content (summary, description) must always be written in English** — regardless of the language used in chat.
 
-## Agency agent
-
-**Before Phase 1**, read and adopt judgment/quality guidance from:
-
-| Role | Path |
-|------|------|
-| Primary | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` |
-
-**Precedence:** This command’s phases, PITOPS/Service Desk field IDs, Wiki Markup formatting, security rules, and AskQuestion gates win on conflict. The agency agent guides ticket hygiene, clear work units, and professional tone — it does not replace phases, invent field IDs, or override abort/confirmation rules.
-
-If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
-
----
-
-## Voraussetzungen
-
-- Jira-Zugang über MCP **oder** Credentials in `~/.cursor/.env` (`JIRA_URL`, `JIRA_TOKEN`)
-- Ausreichend Informationen für Pflichtfelder (siehe Phase 3)
-
-## Security (strikt einhalten)
-
-- **Niemals** Token-Werte ausgeben, loggen oder in Code/Chat kopieren
-- **Niemals** Credentials committen oder in Dateien schreiben
-- **Keine Secrets** in Tickets schreiben (Passwörter, Tokens, API-Keys, interne Credentials)
-- Credentials nur aus `~/.cursor/.env` laden — **nicht** den User nach Token fragen, wenn die Datei existiert
-
-## Content formatting — Jira (strict, MCP and REST)
-
-**Mandatory for every write path.** Whether the ticket is created via **Jira MCP**, **Service Desk API**, or **REST API 2/3**, fields MUST use **Jira Wiki Markup** — never GitHub/GitLab GFM, never Jira Markdown (`##`, `` `code` ``, fenced ```` ``` ````), never raw HTML.
-
-### Dialect (fixed)
-
-**Always author and submit description as Jira Wiki Markup** (string `description`). Do **not** detect or switch dialects. Do **not** use Jira Markdown or hand-written ADF as the source format.
-
-| Preference | Transport | Action |
-|------------|-----------|--------|
-| 1 | REST / Service Desk with string `description` | Pass Wiki Markup string as-is |
-| 2 | MCP tool that only accepts ADF / `document` | Prefer REST with Wiki string; if MCP is required, convert the **Wiki Markup draft** to ADF per schema — never invent Markdown first |
-
-### Field rules
-
-| Feld | Regeln |
-|------|--------|
-| **Summary** | Plain text only — **no** Wiki/Markdown (`h2.`, `*`, `#`, `**`, lists). Max. ~255 chars. Short, specific, single line. Put hostname/service first when relevant |
-| **Description** | **Jira Wiki Markup only**. Structured sections; blank line between sections; follow „Description — Best Practices" |
-| **Links** | `[label\|https://example.com]` or full URLs; no relative paths |
-| **Error messages / logs** | Verbatim inside `{code}…{code}` or `{noformat}…{noformat}` — do not paraphrase |
-
-### Jira Wiki Markup (required for description)
-
-| Element | Syntax | Do not use |
-|---------|--------|------------|
-| Headings | `h2. Problem`, `h3. …` | `## Problem`, `#` |
-| Bold / italic | `*bold*`, `_italic_` | `**bold**`, HTML |
-| Bullets | `* item` / `# item` (ordered) | `- item` GFM lists |
-| Inline / blocks | `{{hostname}}`, `{code}…{code}`, `{noformat}…{noformat}` | Fenced ```` ``` ````, `` `inline` `` |
-| Links | `[label\|https://example.com]` | Markdown `[text](url)` |
-
-### Technical encoding (MCP and REST)
-
-Applies to **every** transport — MCP tool arguments and `curl` JSON:
-
-1. **Never hand-escape JSON** — always `json.dumps()` for the full payload (or native MCP JSON args)
-2. **Newlines** — in string `description` as `\n`; blank line between sections
-3. **Special characters** — quotes in logs/paths via proper JSON encoding only
-4. **No HTML** in description
-5. **Preview** — Phase 4 shows Summary + Description as Wiki Markup (as Jira would render), not escaped JSON
-6. **Wiki first** — draft in Wiki Markup; only convert to ADF if an MCP tool schema forces it
-
-```bash
-# Correct: full payload via json.dumps (REST / shell fallback) — Wiki Markup description
-python3 <<'PYEOF'
-import json
-payload = {
-    "serviceDeskId": "5",
-    "requestTypeId": "657",
-    "requestFieldValues": {
-        "summary": "db01.example.com - disk alert investigation",
-        "description": "h2. Problem\n\nFilesystem usage above threshold.\n\nh2. Details\n\n{code}\n<log excerpt>\n{code}",
-        ...
-    }
-}
-print(json.dumps(payload))
-PYEOF
-```
-
-### Pre-create checklist
-
-- [ ] Summary plain text, under 255 chars, no markup
-- [ ] Description is **Wiki Markup only** (`h2.`, `*`, `{code}`) — no Markdown/ADF as source
-- [ ] `h2.` / `h3.` sections with blank lines
-- [ ] Logs/commands in `{code}` / `{noformat}`
-- [ ] Payload valid for MCP schema or REST JSON
-- [ ] No secrets, no agent/Cursor meta references
+Wiki Markup, security, and auth: see `jira/_common.md`.
 
 ---
 
@@ -120,7 +20,7 @@ PYEOF
 
 | Priorität | Quelle | Wann |
 |-----------|--------|------|
-| 1 | **Expliziter Text** im User-Prompt nach `/jira-create` | User hat Beschreibung direkt angegeben |
+| 1 | **Expliziter Text** im User-Prompt nach `/jira create` | User hat Beschreibung direkt angegeben |
 | 2 | **Chat-Kontext** | Kein expliziter Text — aus bisheriger Konversation ableiten |
 
 **Aus Kontext ableiten — Regeln:**
@@ -156,13 +56,7 @@ Optionen für Request Type, Environment, Platform, Component — jeweils als Mul
 
 ### Phase 2: Jira-Zugang prüfen
 
-**Priorität:**
-
-1. Jira MCP prüfen (`GetDynamicTools`, Pattern `jira`)
-2. Bei verfügbarem MCP: MCP-Tools für Issue-Erstellung nutzen
-3. **Fallback**: REST API via `~/.cursor/.env`
-
-Bei fehlenden Credentials oder Auth-Fehler: User informieren, **nicht** ohne Auth fortfahren.
+Siehe `jira/_common.md` (Jira access).
 
 ### Phase 3: Request Type und Pflichtfelder bestimmen
 
@@ -276,7 +170,7 @@ Bei **Cancel**: Kurz bestätigen, dass kein Ticket erstellt wurde.
 
 ### Phase 5: Ticket erstellen (nur nach Bestätigung)
 
-**Formatierung:** Siehe **Content formatting — Jira** — gilt für **MCP und REST** gleichermaßen. Summary plain text; Description **immer Jira Wiki Markup**; Payload via `json.dumps` oder MCP-JSON-Args.
+**Formatierung:** Siehe `jira/_common.md` (Content formatting — Jira). Summary plain text; Description **immer Jira Wiki Markup**; Payload via `json.dumps` oder MCP-JSON-Args.
 
 **Service Desk API** (bevorzugt für Request Types):
 
@@ -353,9 +247,7 @@ Bei Erfolg:
 
 - Ticket-Key und Browse-URL
 - Kurze Bestätigung
-- Hinweis auf verwandte Commands:
-  - `/jira-read <key>` — Ticket lesen
-  - `/jira-comment <key>` — Kommentar hinzufügen
+- Hinweis: `/jira read <key>` · `/jira comment <key>`
 
 Bei Abbruch:
 
@@ -412,8 +304,3 @@ h2. Expected Outcome
 | Validation error (400) | Fehlende/ungültige Felder identifizieren, User fragen |
 | Secrets im Entwurf | Warnen, entfernen, erneut bestätigen |
 | Duplikat-Verdacht | User warnen wenn ähnliches Ticket im Kontext erwähnt wurde |
-
-## Verwandte Commands
-
-- `/jira-read <ticket-key>` — Ticket lesen
-- `/jira-comment <ticket-key>` — Kommentar zu einem Ticket hinzufügen

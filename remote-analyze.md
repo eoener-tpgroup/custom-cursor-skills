@@ -337,4 +337,4 @@ A visual report as a Canvas can be created separately afterward via the canvas s
 ## Verwandte Commands
 
 - `/commit` — Local Git commit
-- `/merge-request` — Push branch and create MR/PR
+- `/merge-request create` — Push branch and create MR/PR
