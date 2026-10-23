@@ -328,7 +328,7 @@ EOF
 - Commit-Hash (`git rev-parse --short HEAD`)
 - Commit-Message (vollständig)
 - Anzahl geänderter Dateien
-- Hinweis auf `/merge-request`, wenn Push/MR als nächster Schritt sinnvoll ist
+- Hinweis auf `/merge-request create`, wenn Push/MR als nächster Schritt sinnvoll ist
 
 ---
 
@@ -351,6 +351,6 @@ EOF
 
 ## Verwandte Commands
 
-- `/merge-request [instructions]` — Branch pushen und MR/PR erstellen
-- `/merge-request-review [id] [focus]` — Code Review eines MR
-- `/merge-request-fix [id] [instructions]` — Review-Kommentare umsetzen
+- `/merge-request create [instructions]` — Branch pushen und MR/PR erstellen
+- `/merge-request review [id] [focus]` — Code Review eines MR
+- `/merge-request fix [id] [instructions]` — Review-Kommentare umsetzen

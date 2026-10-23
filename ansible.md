@@ -100,7 +100,7 @@ Discover → Plan → [AskQuestion if mutating] → Implement
 - **No secrets** in files or chat — Vault/ref names OK; never plaintext passwords, keys, tokens
 - **Do not** run `ansible-vault view`, `ansible-vault decrypt`, or otherwise decrypt Vault contents into chat or the working tree during discovery/review
 - **No remote deploy** / live inventory apply unless the user **explicitly** requests it after the report in the same session
-- **No commit / push / MR** — hand off to `/commit`, `/merge-request`
+- **No commit / push / MR** — hand off to `/commit`, `/merge-request create`
 - **No** `git config` changes, force-push, or skipping hooks
 - Destructive modules / broad host patterns → ask or keep local-only verification
 - Prefer idempotent tasks, handlers for restarts, and least-privilege become/sudo
@@ -248,7 +248,7 @@ Always emit:
 
 ## Related next steps
 1. `/commit …` (feature branch from `development` if pitops/ansible)
-2. `/merge-request …` when ready
+2. `/merge-request create …` when ready
 3. ...
 ```
 
@@ -289,5 +289,5 @@ Always emit:
 ## Related commands
 
 - `/commit` — Conventional commit (+ pitops/ansible protected-branch rules)
-- `/merge-request` — Push and open MR/PR
-- `/merge-request-review` — Forge MR/PR review (complementary to local `/ansible review`)
+- `/merge-request create` — Push and open MR/PR
+- `/merge-request review` — Forge MR/PR review (complementary to local `/ansible review`)
