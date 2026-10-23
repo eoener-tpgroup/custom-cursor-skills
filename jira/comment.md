@@ -10,6 +10,10 @@ Setzt einen **Kommentar** auf ein bestehendes Jira-Ticket. Der Kommentar-Inhalt 
 
 Wiki Markup, security, and auth: see `jira/_common.md`.
 
+**Comment-only nuances** (in addition to `_common`):
+- Do **not** adopt the Jira agency agent’s commit/branch conventions when this command only posts a comment.
+- Do **not** mirror Markdown from existing ticket comments — convert ideas into **Jira Wiki Markup**.
+
 ---
 
 ## ⚠️ Pflichtargument: Ticket-Key
@@ -58,7 +62,8 @@ Der Ticket-Key ist das **erste Argument** nach dem Subcommand. Optionaler Freite
 2. Nur Informationen einbeziehen, die **für Jira-Teilnehmer relevant** sind
 3. Keine internen Tool-/Agent-Referenzen, keine Meta-Kommentare über Automatisierung
 4. Professioneller, sachlicher Ton — als hätte der User persönlich geschrieben
-5. Strukturiert in **Jira Wiki Markup** formatieren (siehe `jira/_common.md`)
+5. Strukturiert in **Jira Wiki Markup** formatieren (siehe `jira/_common.md`) — bestehende Ticket-Kommentare nicht als Markdown spiegeln
+6. Keine Commit-/Branch-Konventionen aus dem Agency-Agent übernehmen — dieser Subcommand postet nur einen Kommentar
 
 **Bei Unklarheiten → User fragen (Pflicht):**
 

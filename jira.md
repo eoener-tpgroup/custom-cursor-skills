@@ -42,12 +42,14 @@ Triggered manually via `/jira <subcommand> …`.
 
 ## Module load (required — before Phase 1 of the subcommand)
 
-Cursor does not inline nested files. **Read** these paths with the Read tool (resolve under the directory that contains this command file — typically `~/.cursor/commands/`):
+Cursor does not inline nested files. **Read** these modules with the Read tool, resolving paths relative to this command file:
+1. Prefer files in the **same directory** as this file: `_common.md`, then `<subcommand>.md` (skills layout: `…/skills/jira/SKILL.md` + modules beside it).
+2. Else prefer the **sibling directory** named like this command: `jira/_common.md`, `jira/<subcommand>.md` (commands layout: `…/commands/jira.md` + `…/commands/jira/`).
 
-| Order | File | Purpose |
-|-------|------|---------|
-| 1 | `jira/_common.md` | Shared language, agency, security, auth, Wiki Markup |
-| 2 | `jira/<subcommand>.md` | Subcommand workflow (`read.md` / `create.md` / `comment.md`) |
+| Order | File (commands layout) | File (skills layout) | Purpose |
+|-------|------------------------|----------------------|---------|
+| 1 | `jira/_common.md` | `_common.md` | Shared language, agency, security, auth, Wiki Markup |
+| 2 | `jira/<subcommand>.md` | `<subcommand>.md` | Subcommand workflow (`read.md` / `create.md` / `comment.md`) |
 
 **Then** execute only that subcommand’s workflow. Pass remaining prompt text (everything after the subcommand) as its arguments.
 

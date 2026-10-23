@@ -43,6 +43,9 @@ cp ~/src/custom-cursor-skills/*.md ~/.cursor/commands/
 cp -a ~/src/custom-cursor-skills/jira ~/src/custom-cursor-skills/merge-request ~/.cursor/commands/
 # Optional: keep README out of the commands folder
 rm -f ~/.cursor/commands/README.md
+# Migration: remove legacy flat commands superseded by routers
+rm -f ~/.cursor/commands/jira-{read,create,comment}.md \
+      ~/.cursor/commands/merge-request-{review,fix}.md
 ```
 
 ### Clone, then symlink (easy updates via `git pull`)
@@ -103,7 +106,7 @@ for f in ~/src/custom-cursor-skills/*.md; do
 done
 ```
 
-**Note:** Router skills instruct the agent to Read `jira/…` or `merge-request/…` under the commands directory (`~/.cursor/commands/`). Prefer installing routers as **CLI commands** (with module dirs), or adjust Read paths if you only use skills.
+**Note:** Routers resolve modules relative to the command file: same-directory `_common.md` / `<subcommand>.md` (this skills layout), else sibling `jira/` or `merge-request/` (CLI commands layout). Both installs work after the copy above.
 
 ### Project skills (team / repo-local)
 
