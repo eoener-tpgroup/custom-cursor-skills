@@ -1,6 +1,6 @@
 ---
 name: ansible
-description: Create, extend, improve, or review Ansible roles/playbooks with a fixed multi-agent team from ~/.cursor/rules. Modes create|extend|improve|review; plan confirmation before writes; max 4 fix loops. Optional focus after target.
+description: Create, extend, improve, or review Ansible roles/playbooks via Task subagents loading ~/.cursor/rules personas (lib/multi-agent-loop). Modes create|extend|improve|review; plan confirmation before writes; max 4 fix loops.
 ---
 
 # Ansible
@@ -48,21 +48,25 @@ Triggered manually via `/ansible <mode> [target] [focus]`.
 > Usage: `/ansible <create|extend|improve|review> [target] [focus]`
 > Example: `/ansible review roles/nginx focus idempotency`
 
-## Agency agent
+## Agency agent (real Task loop — required)
 
-**Before Phase 2 discovery**, read and adopt judgment from the roster below. Use Task/subagents for role passes when helpful; fold results back into this workflow.
+**Before Phase 2 discovery:**
 
-### Core (always)
+1. **Read** `lib/multi-agent-loop.md` (commands layout: `lib/multi-agent-loop.md` next to this file’s directory sibling `lib/`; skills: installed `lib/` copy).
+2. Parent = **Orchestrator** — owns plan, AskQuestion, verify commands, and final report. Do **not** role-play Implementer/Reviewer/Security alone when Task is available.
+3. Dispatch **Task** (`generalPurpose`) per role below; each prompt requires `Read` of that role’s `~/.cursor/rules/*.mdc`. Bus = **in-session** (pass `prior_briefs` into later Tasks).
 
-| Role | Path | When |
-|------|------|------|
-| Orchestrator | `~/.cursor/rules/engineering-multi-agent-systems-architect.mdc` | Always |
-| Implementer | `~/.cursor/rules/engineering-devops-automator.mdc` | Always |
-| Reviewer | `~/.cursor/rules/engineering-code-reviewer.mdc` | Always |
-| Security | `~/.cursor/rules/security-cloud-security-architect.mdc` | Always |
-| Diff-Guard | `~/.cursor/rules/engineering-minimal-change-engineer.mdc` | Mutating modes only (`create` / `extend` / `improve`) |
+### Core (always — separate Tasks unless noted)
 
-### Optional (when focus/target matches)
+| Role | Path | When | Typical phase |
+|------|------|------|----------------|
+| Orchestrator | `~/.cursor/rules/engineering-multi-agent-systems-architect.mdc` | Always | Parent reads; optional Task for loop design |
+| Implementer | `~/.cursor/rules/engineering-devops-automator.mdc` | Always | Discover assist; Implement (mutating) |
+| Reviewer | `~/.cursor/rules/engineering-code-reviewer.mdc` | Always | Review pass |
+| Security | `~/.cursor/rules/security-cloud-security-architect.mdc` | Always | Security pass (may run parallel with Reviewer) |
+| Diff-Guard | `~/.cursor/rules/engineering-minimal-change-engineer.mdc` | Mutating modes only | Constrain Implementer / fix loops |
+
+### Optional (Task when focus/target matches)
 
 | Signal | Path |
 |--------|------|
@@ -72,19 +76,19 @@ Triggered manually via `/ansible <mode> [target] [focus]`.
 | Docs, meta, README | `~/.cursor/rules/engineering-technical-writer.mdc` |
 | Explicit appsec / injection / auth focus | `~/.cursor/rules/security-appsec-engineer.mdc` |
 
-**Precedence:** This command’s phases, safety rules, confirm gates, max fix loops, and abort conditions win on conflict. Personas guide quality; they do not replace phases, auto-deploy, commit, or invent findings without reading the repo.
+**Precedence:** This command’s phases, safety rules, confirm gates, max fix loops, and abort conditions win on conflict. Task briefs guide quality; they do not replace phases, auto-deploy, commit, or invent findings without reading the repo.
 
-If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+Missing rule file → skip role; note in roster. Task unavailable → in-parent fallback per lib.
 
-## Team loop (always)
+## Team loop (always — Task per role)
 
-Fixed pipeline for every run:
+Fixed pipeline for every run (`lib/multi-agent-loop.md`):
 
 ```text
-Discover → Plan → [AskQuestion if mutating] → Implement
-       → Review + Security → Fix (≤ 4 loops) → Verify → Report
+Discover(Task) → Plan(parent) → [AskQuestion if mutating] → Implement(Task)
+       → Review+Security(Tasks) → Fix ≤ 4 (Task pair) → Verify(parent) → Report(parent)
 
-(review: Discover → Plan → Review + Security → Verify → Report)
+(review: Discover → Plan → Review+Security(Tasks) → Report)
 ```
 
 | Exit | Behavior |
@@ -121,9 +125,10 @@ Discover → Plan → [AskQuestion if mutating] → Implement
 
 ### Phase 1: Load agency team
 
-1. Read all **core** rule files (Diff-Guard only for mutating modes)
-2. Read **optional** rules matching focus/target signals
-3. Record loaded vs skipped (missing) for the final report roster
+1. Read `lib/multi-agent-loop.md`
+2. Build roster: **core** (Diff-Guard only for mutating modes) + **optional** by focus/target signals
+3. Record dispatch plan (Task vs fallback) and skipped (missing) rules for the report
+4. Do not bulk-Read every rule into the parent as a substitute for Task when Task works
 
 ### Phase 2: Discover repository
 
@@ -175,16 +180,16 @@ For `review`: skip confirm; no writes in later phases.
 
 #### `create` / `extend` / `improve`
 
-1. **Implementer** applies changes following repo conventions and Diff-Guard (minimal scope)
-2. **Reviewer** + **Security** (and optionals) assess the result
-3. **Fix loop** (max **4**): address Critical/Major findings, re-review; when local tools exist, run `yamllint` / `ansible-lint` / `ansible-playbook --syntax-check` on changed paths **inside each iteration** so failures can consume the fix budget
-4. Stop per Team loop exit table
+1. **Implementer Task** applies changes (prompt includes Diff-Guard constraints / rule path for mutating modes)
+2. **Reviewer Task** + **Security Task** (parallel OK) + matching optional Tasks assess the result; fold briefs in-session
+3. **Fix loop** (max **4**): Implementer Task addresses Critical/Major → re-dispatch Reviewer/Security Tasks; when local tools exist, run `yamllint` / `ansible-lint` / `ansible-playbook --syntax-check` on changed paths **inside each iteration** (parent or Implementer Task)
+4. Stop per Team loop exit table. Parent owns AskQuestion — never the subagent alone.
 
 #### `review`
 
 1. No file writes
-2. Multi-pass review: architecture/correctness → Ansible quality (idempotency, handlers, vars, tags) → security
-3. Classify findings: Critical / Major / Minor / Suggestion / Question
+2. Dispatch Reviewer + Security Tasks (optional domain Tasks); architecture/correctness → Ansible quality → security
+3. Classify findings from Task briefs: Critical / Major / Minor / Suggestion / Question
 4. Skip fix loops (report findings only) unless the user explicitly asks to switch mode afterward
 
 ### Phase 6: Verify
@@ -210,9 +215,9 @@ Always emit:
 <2-4 sentences: what was done or found; open Critical/Major count>
 
 ## Team roster (loaded / skipped)
-| Role | Rule | Status |
-|------|------|--------|
-| ... | ... | loaded / skipped (missing) |
+| Role | Rule | Dispatch | Status |
+|------|------|----------|--------|
+| ... | ... | Task / in-parent fallback | loaded / skipped (missing) |
 
 ## Plan vs delivered
 < Bullets: planned vs actual; note confirm outcome >
@@ -264,7 +269,7 @@ Always emit:
 ## Principles
 
 1. **Confirm before mutate** — no writes without AskQuestion approval in mutating modes
-2. **Team always** — load core roster every run; optionals by signal
+2. **Team always** — Task-dispatch core roster every run; optionals by signal (`lib/multi-agent-loop.md`)
 3. **Fix budget 4** — then report remaining opens honestly
 4. **Evidence** — cite paths/tasks; no invented lint results
 5. **Secrets hygiene** — never embed credentials

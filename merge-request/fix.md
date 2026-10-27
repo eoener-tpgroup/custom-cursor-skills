@@ -66,17 +66,21 @@ The MR ID appears in the user prompt **after the command name** (e.g. `/merge-re
 
 See router / `_common`: all user-facing output in **English**.
 
-## Agency agent
+## Agency agent (Task dispatch — required)
 
-**Before Phase 1**, read and adopt judgment/quality guidance from:
+**Before Phase 1:**
+
+1. **Read** `lib/multi-agent-loop.md` (commands: `lib/multi-agent-loop.md`; skills: installed `lib/` copy).
+2. Dispatch a **Task** (`generalPurpose`) for Primary. Prompt must require `Read` of the rule path and include triage scope + review threads in scope. Bus = **in-session**.
+3. Parent owns AskQuestion before applying writes, commits, and replies.
 
 | Role | Path |
 |------|------|
 | Primary | `~/.cursor/rules/engineering-minimal-change-engineer.mdc` |
 
-**Precedence:** This command’s phases, triage categories, dual-platform detection, Content formatting, Git Safety Protocol, and AskQuestion gates win on conflict. The agency agent enforces minimal diffs and refusal of scope creep — it does not expand fixes beyond actionable review items, replace phases, or override abort/confirmation rules. When project conventions under `.cursor/rules/` or `CONTRIBUTING.md` conflict with a review comment, note the conflict in the summary rather than silently over-refactoring.
+**Precedence:** This command’s phases, triage categories, dual-platform detection, Content formatting, Git Safety Protocol, and AskQuestion gates win on conflict. The Task brief enforces minimal diffs and refusal of scope creep — it does not expand fixes beyond actionable review items or override abort/confirmation. When project conventions under `.cursor/rules/` or `CONTRIBUTING.md` conflict with a review comment, note the conflict rather than silently over-refactoring.
 
-If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+Missing rule → note skipped. Task unavailable → in-parent fallback per lib.
 
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 

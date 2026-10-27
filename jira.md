@@ -50,10 +50,11 @@ Cursor does not inline nested files. **Read** these modules with the Read tool, 
 |-------|------------------------|----------------------|---------|
 | 1 | `jira/_common.md` | `_common.md` | Shared language, agency, security, auth, Wiki Markup |
 | 2 | `jira/<subcommand>.md` | `<subcommand>.md` | Subcommand workflow (`read.md` / `create.md` / `comment.md`) |
+| — | `lib/multi-agent-loop.md` | `../lib/multi-agent-loop.md` (or installed `lib/`) | Real Task dispatch for agency roles (via `_common`) |
 
 **Then** execute only that subcommand’s workflow. Pass remaining prompt text (everything after the subcommand) as its arguments.
 
-**Precedence:** This router’s abort rules and AskQuestion gates win on conflict. Subcommand modules win over `_common` for phase numbering and field-specific rules. Agency agents guide judgment only — they do not replace phases.
+**Precedence:** This router’s abort rules and AskQuestion gates win on conflict. Subcommand modules win over `_common` for phase numbering and field-specific rules. Agency roles run via **Task** + `~/.cursor/rules` (see `lib/multi-agent-loop.md`) — they guide judgment only and do not replace phases.
 
 ## Related commands
 
