@@ -28,7 +28,7 @@ If this file is missing → fall back to in-parent Read of rule files; note `Mul
 3. **Rule file is mandatory context** — every Task prompt must tell the subagent to `Read` its `~/.cursor/rules/<file>.mdc` **before** doing work and to adopt that persona’s judgment.
 4. **Missing rule file** — skip that role; note in roster; continue with remaining roles.
 5. **Task unavailable** — if the Task tool cannot be invoked, fall back to in-parent Read + persona adoption for that role; note `Task: unavailable (in-parent fallback)`.
-6. **No secrets** in Task prompts, Notion handoffs, or returned briefs.
+6. **No secrets** in Task prompts or returned briefs.
 7. **User-facing English** — parent reports/questions in English; subagent briefs may be English structured text for the parent.
 
 ## Cursor Task dispatch
@@ -46,7 +46,7 @@ Use the **Task** tool (dynamic `cursor` namespace / native Task):
 ### Parallelism
 
 - **Allowed:** independent collect / discovery passes with no shared mutable state
-- **Forbidden:** parallel writers on the same files without orchestrator merge; parallel Notion writes that race the same `run_id` row without coordination
+- **Forbidden:** parallel writers on the same files without orchestrator merge
 - Challenge / fix loops are **sequential** (read prior briefs → Task → fold → next)
 
 ## Prompt template (every role Task)
@@ -67,14 +67,14 @@ You are the <ROLE_NAME> agent for command /<COMMAND> (run_id=<RUN_ID>).
 - Do NOT commit/push/open MR/PR unless the command phase explicitly assigns that to you (normally never).
 
 ## Command constraints
-<PASTE: remote read-only / Notion hub rules / Wiki Markup / Git safety / max scope — as applicable>
+<PASTE: remote read-only / Wiki Markup / Git safety / max scope — as applicable>
 
 ## Inputs
 - run_id: <RUN_ID>
 - command: <COMMAND>
 - phase: <PHASE>
 - args: <FQDN / mode / target / MR id / ticket / focus>
-- prior_briefs: <summaries or Notion handoff pointers for this run_id>
+- prior_briefs: <summaries of earlier Task returns for this run_id>
 - workspace / paths in scope: <…>
 
 ## Your job this pass
@@ -96,20 +96,15 @@ Return English structured text with:
 1. Validate args / load command modules
 2. Build roster (core + optional signals)
 3. Read this lib file
-4. Bus handshake (Notion hub **or** in-session — per command)
+4. Keep **in-session** briefs (pass `prior_briefs` into the next Task prompt)
 5. Dispatch Task(s) per team-loop phase
 6. Fold briefs → challenge/fix loops per command limits
 7. Own all **AskQuestion** / user confirmations (subagents do not confirm with the user)
 8. Emit the command’s final report (include Task vs fallback roster notes)
 
-## Bus modes
+## Bus mode
 
-| Mode | Used by | Behavior |
-|------|---------|----------|
-| **Notion hub** | `/remote-analyze`, `/postgres-optimize` | READ/WRITE only under Agent Communication hub; each Task pass should WRITE a Handoff (or parent writes the handoff from the Task return); next roles READ same `run_id` |
-| **In-session** | `/ansible`, `/jira`, `/merge-request`, `/commit` | Parent keeps briefs in chat/state; pass `prior_briefs` into the next Task prompt; no Notion required |
-
-If Notion is unavailable in Notion-hub mode → in-session briefs + note in report; **never** compensate with remote host writes.
+**In-session only.** Parent keeps briefs in chat/state and passes `prior_briefs` into the next Task prompt. No external hub or third-party write surface is required for agent-to-agent handoffs.
 
 ## Team-loop shapes (reference)
 
@@ -124,7 +119,7 @@ Discover(Task) → Plan(parent) → AskQuestion → Implement(Task) → Review+S
 Discover → Review+Security(Task) → Report
 
 # remote-analyze / postgres-optimize
-Validate → Roster+Notion → SSH(parent) → Collect(Task, parallel OK)
+Validate → Roster → SSH(parent) → Collect(Task, parallel OK)
   → Challenge ≤N (Task Reality Checker [+ Benchmarker]) → Report(parent)
 
 # jira / merge-request (light)
@@ -149,4 +144,4 @@ Status/diff(parent) → Branch plan(parent) → Git-workflow Task (optional Jira
 - Task prompt without the absolute `~/.cursor/rules/…` path
 - Subagent inventing lint/SSH/MR results without running tools
 - Subagent posting to Jira/MR/Git without parent confirmation gates
-- Using Task to bypass remote read-only or to write Notion outside the hub
+- Using Task to bypass remote read-only

@@ -1,11 +1,11 @@
 ---
 name: remote-analyze
-description: Read-only SSH analysis via host|database|barman. Task subagents load ~/.cursor/rules; Notion Agent Communication hub for handoffs; never write remote hosts.
+description: Read-only SSH analysis via host|database|barman. Task subagents load ~/.cursor/rules; in-session handoffs; never write remote hosts.
 ---
 
 # Remote Analyze
 
-Read-only remote inspection via SSH. **Nothing** on the remote host is modified. Agents may read/write the private Notion **Agent Communication** hub for handoffs only.
+Read-only remote inspection via SSH. **Nothing** on the remote host is modified. Agent handoffs stay in-session via Task briefs.
 
 Triggered manually via `/remote-analyze <subcommand> <fqdn> [focus]`.
 
@@ -47,13 +47,13 @@ Cursor does not inline nested files. **Read** these modules with the Read tool, 
 
 | Order | File (commands layout) | File (skills layout) | Purpose |
 |-------|------------------------|----------------------|---------|
-| 1 | `remote-analyze/_common.md` | `_common.md` | Read-only protocol, SSH, Notion handshake, agency team, loop |
+| 1 | `remote-analyze/_common.md` | `_common.md` | Read-only protocol, SSH, agency team, loop |
 | 2 | `remote-analyze/<subcommand>.md` | `<subcommand>.md` | Type-specific collect + report (`host` / `database` / `barman`) |
 | — | `lib/multi-agent-loop.md` | `../lib/multi-agent-loop.md` (or installed `lib/`) | Real Task dispatch (loaded from `_common`) |
 
 **Then** execute only that subcommand’s workflow. Pass remaining prompt text (everything after the subcommand) as its arguments (`FQDN` + optional `focus`).
 
-**Precedence:** This router’s abort rules and AskQuestion gates win on conflict. Subcommand modules win over `_common` for phase numbering and type-specific checks. Agency roles run via **Task** + `~/.cursor/rules` — they do not replace phases. **Remote read-only is absolute** — no persona, focus, or Notion handoff may authorize a write on the remote host. Notion writes are allowed **only** under the Agent Communication hub (see `_common`).
+**Precedence:** This router’s abort rules and AskQuestion gates win on conflict. Subcommand modules win over `_common` for phase numbering and type-specific checks. Agency roles run via **Task** + `~/.cursor/rules` — they do not replace phases. **Remote read-only is absolute** — no persona, focus, or Task brief may authorize a write on the remote host.
 
 ## Related commands
 

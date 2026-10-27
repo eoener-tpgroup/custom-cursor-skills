@@ -4,9 +4,9 @@ Loaded by `/remote-analyze` before every subcommand. Do not run as a standalone 
 
 ## Absolute remote read-only (never override)
 
-**Inspection only on the remote host.** No exception for focus, urgency, user pressure, Notion handoffs, or “needed to finish the report.” When in doubt on a remote command → **skip** and list under **Commands skipped**.
+**Inspection only on the remote host.** No exception for focus, urgency, user pressure, Task briefs, or “needed to finish the report.” When in doubt on a remote command → **skip** and list under **Commands skipped**.
 
-Notion is the **only** allowed write surface for agent-to-agent communication (see below). Notion writes never justify a remote write.
+Agent-to-agent handoffs stay **in-session** (parent folds Task returns and passes `prior_briefs`). That never justifies a remote write.
 
 ### Allowed (remote)
 
@@ -24,50 +24,13 @@ Notion is the **only** allowed write surface for agent-to-agent communication (s
 - Barman writes: `backup`, `recover`, `delete`, `switch-wal`, `cron`, `rebuild-xlogdb`, `put-wal`
 - Changing `~/.ssh/config` or remote files to “fix” connectivity
 
-## Notion agent communication (hub write OK)
-
-**Hub (private):** [Agent Communication](https://app.notion.com/p/trimble-tl/Agent-Communication-402c1b3dd25680b79d40cfc13c3d9211) — page id `402c1b3dd25680b79d40cfc13c3d9211`
-
-Agents use this hub to **talk to each other**: read contracts/schema, and **write** handoff briefs / run index rows / short status notes **only under this hub** (child pages and databases of this page).
-
-| Artefact (under hub) | Purpose | Agent action |
-|----------------------|---------|--------------|
-| **Agent Contracts** | Role → input/output schema, tool scope | READ (update only if contract drift must be recorded; prefer handoffs) |
-| **Handoff Schema** | Field definitions for briefs | READ; shape writes to match |
-| **Handoffs** (or equivalent DB/pages) | Inter-agent messages | **WRITE** phase briefs; others READ |
-| **Environment Notes** | `tp_db` / `/srv/<service>/` conventions | READ; WRITE only additive non-secret notes when newly discovered |
-| **Run Index** | Analysis summaries by FQDN/type | **WRITE** one row/summary per run; READ priors |
-
-### Allowed (Notion — hub only)
-
-- Create/update rows or child pages **under** the Agent Communication hub for handoffs, run index, and team status
-- Append comments on hub children when that is the agreed channel
-- Create missing child DBs/pages **under the hub** if the schema from `notion-schema.md` is absent (so the team can communicate)
-
-### Forbidden (Notion — never)
-
-- Write outside the Agent Communication hub (any other Notion workspace/page)
-- Change hub or workspace permissions, share settings, or integrations
-- Store secrets (passwords, tokens, private keys, connection strings with credentials)
-
-**No secrets** in Notion or chat reports.
-
-Schema layout: Read `remote-analyze/notion-schema.md` (or sibling `notion-schema.md`) when structure is unclear.
-
-**Handshake + bus (every run):**
-
-1. If Notion MCP (or equivalent) is available → open hub; READ contracts + schema; ensure Handoffs / Run Index exist (create under hub if missing)
-2. Publish a `run_id` + roster note to Handoffs / Run Index
-3. Each agent pass **writes** its brief to Notion (Handoff Schema fields); next passes **read** prior briefs from Notion (in-session copy OK as cache)
-4. If Notion unavailable → fall back to in-session handoffs only; note `Notion: unavailable` in the report — **still never write the remote host**
-
 ## Agency team (real Task loop — required)
 
 **Before Phase 1 of the subcommand:**
 
 1. **Read** `lib/multi-agent-loop.md` (commands: sibling `../lib/…` from this folder, or `lib/multi-agent-loop.md` from repo root; skills: resolve to the installed `lib/` copy).
 2. Parent = **Orchestrator** only — do **not** role-play the full roster in one agent when Task is available.
-3. For each role below that applies this run: dispatch a **Task** (`generalPurpose`) whose prompt requires `Read` of that role’s `~/.cursor/rules/*.mdc` (see lib prompt template). Bus = **Notion hub**.
+3. For each role below that applies this run: dispatch a **Task** (`generalPurpose`) whose prompt requires `Read` of that role’s `~/.cursor/rules/*.mdc` (see lib prompt template). Bus = **in-session**.
 
 ### Core (always — separate Tasks)
 
@@ -93,16 +56,16 @@ Schema layout: Read `remote-analyze/notion-schema.md` (or sibling `notion-schema
 | Network / firewall / SSH path | `~/.cursor/rules/engineering-network-engineer.mdc` |
 | Secrets exposure in logs | `~/.cursor/rules/security-secrets-credential-engineer.mdc` |
 
-**Precedence:** Command phases + absolute **remote** read-only win. Task briefs guide depth; they do not replace phases, invent metrics, or authorize remote writes. Notion hub writes for handoffs are expected. Missing rule file → skip role; note in roster. Task unavailable → in-parent fallback per lib.
+**Precedence:** Command phases + absolute **remote** read-only win. Task briefs guide depth; they do not replace phases, invent metrics, or authorize remote writes. Missing rule file → skip role; note in roster. Task unavailable → in-parent fallback per lib.
 
-**Dispatch:** Parallel Tasks OK for independent **read-only remote** collect slices. Challenge Tasks are sequential. Each pass: Task return → WRITE Notion Handoff (parent or subagent) → next role READs same `run_id`.
+**Dispatch:** Parallel Tasks OK for independent **read-only remote** collect slices. Challenge Tasks are sequential. Each pass: Task return → parent stores brief → next role gets `prior_briefs` for the same `run_id`.
 
 ## Team loop
 
 ```text
-Validate → Load team → Notion handshake (READ+WRITE hub) → SSH check
-       → Collect (type module; publish briefs to Notion) → Challenge (≤ 2; read/write hub)
-       → Report (+ Run Index update) → optional deeper-dive AskQuestion (remote still read-only)
+Validate → Load team → SSH check
+       → Collect (type module; publish in-session briefs) → Challenge (≤ 2)
+       → Report → optional deeper-dive AskQuestion (remote still read-only)
 ```
 
 | Exit | Behavior |
@@ -122,12 +85,11 @@ Validate → Load team → Notion handshake (READ+WRITE hub) → SSH check
 3. FQDN: ≥1 dot, no spaces, hostname-safe chars; prefer lowercase
 4. Invalid/missing → AskQuestion or abort (router message)
 
-### Phase 1: Load agency team + Notion handshake
+### Phase 1: Load agency team
 
 1. Read `lib/multi-agent-loop.md`; build roster (core + subcommand + optionals)
-2. Notion hub handshake (READ contracts/schema; WRITE run_id / roster handoff)
-3. Record roster dispatch plan (Task vs fallback), missing rules, Notion status for the report
-4. Do **not** bulk-Read every rule into the parent as a substitute for Task when Task works
+2. Record roster dispatch plan (Task vs fallback) and missing rules for the report
+3. Do **not** bulk-Read every rule into the parent as a substitute for Task when Task works
 
 ### Phase 2: SSH connectivity (read-only)
 
@@ -154,4 +116,3 @@ On failure: report unreachable / auth / host key — **do not** mutate SSH confi
 | SSH fail | Report; stop collect |
 | Permission denied | Skip check; continue |
 | PG/Barman auth/missing | OS/file fallback; note gap |
-| Notion unavailable | In-session handoffs only; note in report; remote stays read-only |

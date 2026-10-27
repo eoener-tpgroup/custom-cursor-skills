@@ -8,8 +8,8 @@ Loaded after `collect.md` handoff. Do not run standalone. Read-only: recommendat
 |------|---------|--------|
 | Classify | Performance Benchmarker + Optimizer | Workload profile + evidence table |
 | Draft recs | Database Optimizer (+ DBRE for HA/repl context) | Prioritized recommendations with risk |
-| Challenge (≤ 3) | Reality Checker (+ Performance) | READ prior Notion handoffs; drop unevidenced 🔴; WRITE challenge notes; optional one remote recollect |
-| Report | Orchestrator | Final English report; WRITE Run Index `done`/`partial` |
+| Challenge (≤ 3) | Reality Checker (+ Performance) | READ prior in-session briefs; drop unevidenced 🔴; return challenge notes; optional one remote recollect |
+| Report | Orchestrator | Final English report |
 
 ## Phase 7: Workload classification
 
@@ -97,7 +97,6 @@ Mark apply method: conf **reload** vs **restart** vs OS vs DDL — user applies 
 | Cluster role | Primary / Standby |
 | Analysis time | … (UTC) |
 | Agency roster | … |
-| Notion bus | ok / unavailable (hub handoffs) |
 
 ## Host resources
 | Resource | Value | Notes |

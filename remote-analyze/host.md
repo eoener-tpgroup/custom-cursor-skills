@@ -4,7 +4,7 @@ Loaded by `/remote-analyze host …` after `remote-analyze/_common.md`. Do not r
 
 **Invocation:** `/remote-analyze host <fqdn> [focus]`
 
-Shared safety, Notion, agency, Phase 0–2: see `_common.md`.
+Shared safety, agency, Phase 0–2: see `_common.md`.
 
 ## Arguments
 
@@ -24,8 +24,8 @@ Shared safety, Notion, agency, Phase 0–2: see `_common.md`.
 |------|---------|---------------------|
 | Collect | SRE | identity, resources, load, services, network, journal errors |
 | Optional | Network Engineer | ports, listeners, path issues (if focus) |
-| Challenge | Reality Checker | READ Notion handoffs; drop unevidenced claims; WRITE challenge notes |
-| Optional | Incident Commander | SEV framing if Critical (Notion handoff OK) |
+| Challenge | Reality Checker | READ prior in-session briefs; drop unevidenced claims; return challenge notes |
+| Optional | Incident Commander | SEV framing if Critical (in-session brief OK) |
 
 ## Workflow (after Phase 0–2)
 
@@ -47,7 +47,7 @@ Flag: disk >85%, inode pressure, high load, failed units, OOM hints.
 
 **Focus:** map early (disk → `df`/`findmnt`; OOM → journal/mem; network → `ss`/`ip`) with extra depth; keep full checklist unless user limited scope.
 
-Publish collect brief to Notion **Handoffs** (`phase=collect`, no secrets). Remote stays read-only.
+Publish collect brief in-session (`phase=collect`, no secrets). Remote stays read-only.
 
 ### Phase 4: Challenge loop (≤ 2)
 
@@ -72,7 +72,6 @@ Reality Checker: every Warning/Critical must cite output. Orchestrator may re-co
 | SSH user | … |
 | Analysis time | … (UTC) |
 | Agency roster | loaded / missing |
-| Notion bus | ok / unavailable (hub handoffs) |
 
 ## Findings
 ### ✅ Healthy
@@ -99,7 +98,7 @@ Reality Checker: every Warning/Critical must cite output. Orchestrator may re-co
 1. …
 ```
 
-Recommendations are **advisory** — this command never applies them on the remote host. Update Notion **Run Index** to `done`/`partial`.
+Recommendations are **advisory** — this command never applies them on the remote host.
 
 ### Phase 6: Optional deeper dive
 

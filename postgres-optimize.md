@@ -1,11 +1,11 @@
 ---
 name: postgres-optimize
-description: Read-only SSH PostgreSQL tuning advice. Task subagents load ~/.cursor/rules; Notion hub handoffs; never write remote hosts. Requires FQDN; optional focus.
+description: Read-only SSH PostgreSQL tuning advice. Task subagents load ~/.cursor/rules; in-session handoffs; never write remote hosts. Requires FQDN; optional focus.
 ---
 
 # PostgreSQL Optimize
 
-Read-only performance analysis of PostgreSQL via SSH: collect metrics, classify workload, deliver prioritized tuning advice. **Never** modifies the remote host. Agents may read/write the private Notion **Agent Communication** hub for handoffs only.
+Read-only performance analysis of PostgreSQL via SSH: collect metrics, classify workload, deliver prioritized tuning advice. **Never** modifies the remote host. Agent handoffs stay in-session via Task briefs.
 
 Triggered manually via `/postgres-optimize <fqdn> [focus]`.
 
@@ -44,14 +44,14 @@ Cursor does not inline nested files. **Read** modules with the Read tool, resolv
 
 | Order | When | File (commands) | File (skills) | Purpose |
 |-------|------|-----------------|---------------|---------|
-| 1 | Before Phase 0 | `postgres-optimize/_common.md` | `_common.md` | Read-only, SSH, Notion, agency, loop |
+| 1 | Before Phase 0 | `postgres-optimize/_common.md` | `_common.md` | Read-only, SSH, agency, loop |
 | 2 | After Phase 2 SSH OK | `postgres-optimize/collect.md` | `collect.md` | Host + PG metrics collection |
 | 3 | After collect briefs | `postgres-optimize/analyze.md` | `analyze.md` | Classify, recommend, report |
 | — | With agency load | `lib/multi-agent-loop.md` | `../lib/multi-agent-loop.md` (or installed `lib/`) | Real Task dispatch (from `_common`) |
 
 Execute phases in order. Do **not** load `analyze.md` until collect briefs exist. Pass prompt text after the command name as `FQDN` + optional `focus`.
 
-**Precedence:** This router’s abort rules win on conflict. Module phase numbering wins over `_common` within that module. Agency roles run via **Task** + `~/.cursor/rules`. **Remote read-only is absolute** — no persona, focus, or Notion handoff may authorize a write, reload, VACUUM, or config change on the remote host. Notion writes are allowed **only** under the Agent Communication hub (see `_common`).
+**Precedence:** This router’s abort rules win on conflict. Module phase numbering wins over `_common` within that module. Agency roles run via **Task** + `~/.cursor/rules`. **Remote read-only is absolute** — no persona, focus, or Task brief may authorize a write, reload, VACUUM, or config change on the remote host.
 
 ## Related commands
 

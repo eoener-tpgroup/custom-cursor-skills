@@ -13,8 +13,8 @@ Each top-level `*.md` file (except `README.md`) is one slash-command (for exampl
 | `commit` | [`commit.md`](commit.md) | Conventional Commits (no emojis) + optional feature branch; light Task + git-workflow rule; ansible protected-branch guard |
 | `merge-request` | [`merge-request.md`](merge-request.md) + [`merge-request/`](merge-request/) | Subcommands `create` \| `review` \| `fix` (GitHub PR / GitLab MR) |
 | `jira` | [`jira.md`](jira.md) + [`jira/`](jira/) | Subcommands `read` \| `create` \| `comment` (PITOPS Service Desk) |
-| `remote-analyze` | [`remote-analyze.md`](remote-analyze.md) + [`remote-analyze/`](remote-analyze/) | Subcommands `host` \| `database` \| `barman` (read-only SSH; multi-agent; Notion hub handoffs) |
-| `postgres-optimize` | [`postgres-optimize.md`](postgres-optimize.md) + [`postgres-optimize/`](postgres-optimize/) | Read-only PG tuning via `collect` → `analyze` (multi-agent; Notion hub handoffs) |
+| `remote-analyze` | [`remote-analyze.md`](remote-analyze.md) + [`remote-analyze/`](remote-analyze/) | Subcommands `host` \| `database` \| `barman` (read-only SSH; multi-agent) |
+| `postgres-optimize` | [`postgres-optimize.md`](postgres-optimize.md) + [`postgres-optimize/`](postgres-optimize/) | Read-only PG tuning via `collect` → `analyze` (multi-agent) |
 | `ansible` | [`ansible.md`](ansible.md) | Create, extend, improve, or review Ansible roles/playbooks via Task + `~/.cursor/rules` |
 | *(shared)* | [`lib/multi-agent-loop.md`](lib/multi-agent-loop.md) | Task-dispatch contract for agency commands (not a slash-command) |
 
@@ -192,7 +192,7 @@ These rules appear across the command definitions and should be treated as hard 
 4. **No secrets** — never print tokens, commit credentials, or put passwords/API keys into tickets or MR comments.
 5. **Platform-correct markup** — GitHub GFM vs GitLab Markdown for MR/PR text; **Jira Wiki Markup** for Jira create/comment — never Markdown/GFM/ADF as the authoring dialect for those commands. For `/merge-request create|review|fix`, the forge comes from the **origin URL** (not from which CLI happens to be installed).
 6. **Git safety** — no `git config` changes, no force-push to `main`/`master`, no skipping hooks, no destructive git without an explicit user request.
-7. **Remote analysis is read-only on the host** — `/remote-analyze` and `/postgres-optimize` must never write, restart services, run DDL/DML, or reload Postgres on the remote host. Agents **may** read/write the private Notion **Agent Communication** hub for inter-agent handoffs only — never any other Notion page, and never as an excuse to mutate a remote host.
+7. **Remote analysis is read-only** — `/remote-analyze` and `/postgres-optimize` must never write, restart services, run DDL/DML, or reload Postgres on the remote host. Agent handoffs stay in-session (Task briefs); never use an external bus as an excuse to mutate a remote host.
 8. **Agency agents (real Task loop)** — `/commit`, Jira, MR, `/ansible`, `/remote-analyze`, and `/postgres-optimize` **Read** [`lib/multi-agent-loop.md`](lib/multi-agent-loop.md), then dispatch **Task** subagents whose prompts load matching `~/.cursor/rules/*.mdc` personas (parent = orchestrator; `/commit` is light: one primary Task). Fallback to in-parent Read only if Task or the rule file is unavailable. Command phases, safety, and AskQuestion gates always win on conflict.
 9. **Router modules** — `/jira`, `/merge-request`, and `/remote-analyze` require a subcommand; `/postgres-optimize` loads `_common` → `collect` → `analyze` sequentially. Always install `lib/`. Do not invent missing modules.
 
@@ -295,7 +295,7 @@ Router with required subcommand. Modules: [`jira/_common.md`](jira/_common.md), 
 
 ### `/remote-analyze`
 
-Router with required subcommand. Modules: [`remote-analyze/_common.md`](remote-analyze/_common.md), [`host.md`](remote-analyze/host.md), [`database.md`](remote-analyze/database.md), [`barman.md`](remote-analyze/barman.md). Notion schema (human-maintained): [`notion-schema.md`](remote-analyze/notion-schema.md).
+Router with required subcommand. Modules: [`remote-analyze/_common.md`](remote-analyze/_common.md), [`host.md`](remote-analyze/host.md), [`database.md`](remote-analyze/database.md), [`barman.md`](remote-analyze/barman.md).
 
 | Subcommand | Purpose |
 |------------|---------|
@@ -305,9 +305,9 @@ Router with required subcommand. Modules: [`remote-analyze/_common.md`](remote-a
 
 | | |
 |--|--|
-| **Can do** | Subcommand + FQDN (+ optional focus); multi-agent collect → challenge (≤ 2) → report; **READ/WRITE** Notion Agent Communication hub for handoffs/Run Index |
-| **Cannot do** | Write remote files, restart services, DDL/DML, Barman backup/`cron`, change `~/.ssh/config`, or write Notion **outside** the Agent Communication hub |
-| **Guidelines** | Subcommand required. Always **Read** `_common` + type module + `lib/multi-agent-loop.md`. Absolute **remote** read-only; Notion hub is the agent bus. Agency via Task: orchestrator + SRE + Reality Checker (+ DBRE for database/barman). |
+| **Can do** | Subcommand + FQDN (+ optional focus); multi-agent collect → challenge (≤ 2) → report; in-session Task handoffs |
+| **Cannot do** | Write remote files, restart services, DDL/DML, Barman backup/`cron`, change `~/.ssh/config` |
+| **Guidelines** | Subcommand required. Always **Read** `_common` + type module + `lib/multi-agent-loop.md`. Absolute remote read-only. Agency via Task: orchestrator + SRE + Reality Checker (+ DBRE for database/barman). |
 
 **Usage examples**
 
@@ -324,13 +324,13 @@ Router with required subcommand. Modules: [`remote-analyze/_common.md`](remote-a
 
 ### `/postgres-optimize`
 
-Sequential modules (no subcommand): [`postgres-optimize/_common.md`](postgres-optimize/_common.md) → [`collect.md`](postgres-optimize/collect.md) → [`analyze.md`](postgres-optimize/analyze.md). Shares Notion hub schema with remote-analyze.
+Sequential modules (no subcommand): [`postgres-optimize/_common.md`](postgres-optimize/_common.md) → [`collect.md`](postgres-optimize/collect.md) → [`analyze.md`](postgres-optimize/analyze.md).
 
 | | |
 |--|--|
-| **Can do** | FQDN (+ optional focus); team collect → classify → recommend → challenge (≤ 3) → report; Notion hub **READ/WRITE** handoffs |
-| **Cannot do** | Apply config, VACUUM/ANALYZE/REINDEX, terminate backends, reload Postgres, write benchmarks, Notion writes outside the Agent Communication hub |
-| **Guidelines** | Load modules in order + `lib/multi-agent-loop.md`. Recommendations cite metrics; version-aware; host + `pg_settings`. Absolute **remote** read-only. Agency via Task: orchestrator, SRE, DBRE, optimizer, performance benchmarker, Reality Checker. |
+| **Can do** | FQDN (+ optional focus); team collect → classify → recommend → challenge (≤ 3) → report; in-session Task handoffs |
+| **Cannot do** | Apply config, VACUUM/ANALYZE/REINDEX, terminate backends, reload Postgres, write benchmarks |
+| **Guidelines** | Load modules in order + `lib/multi-agent-loop.md`. Recommendations cite metrics; version-aware; host + `pg_settings`. Absolute remote read-only. Agency via Task: orchestrator, SRE, DBRE, optimizer, performance benchmarker, Reality Checker. |
 
 **Usage examples**
 
@@ -372,7 +372,7 @@ Creates, extends, improves, or reviews Ansible roles, playbooks, and related inv
 /merge-request review
 /merge-request fix only fix critical and major inline comments
 
-# Ops investigation → ticket trail (remote read-only; Notion Agent Communication for team handoffs)
+# Ops investigation → ticket trail (remote read-only; in-session Task handoffs)
 /remote-analyze database db01.example.com replication lag
 /postgres-optimize db01.example.com checkpoint pressure
 /jira create disk alert investigation on db01 — productive, storage
@@ -393,9 +393,9 @@ Creates, extends, improves, or reviews Ansible roles, playbooks, and related inv
 
 1. Keep workflow bodies actionable and concise; prefer tables and checklists.
 2. Preserve confirmation gates for any write (git, Jira, MR comments, code fixes).
-3. Keep remote workflows strictly read-only on the host; Notion Agent Communication hub writes for agent handoffs are allowed.
+3. Keep remote workflows strictly read-only.
 4. Document new args with usage ✅/❌ examples in the workflow file **and** update this README.
 5. Do not commit `~/.cursor/.env`, tokens, or host-specific secrets.
 6. For routers (`jira`, `merge-request`, `remote-analyze`) and sequential loaders (`postgres-optimize`): keep the top-level file thin; put shared rules in `_common.md` and phases in named modules; never register module `.md` files or `lib/*.md` as top-level slash-commands.
-7. Preserve absolute remote read-only on ops analysis commands — never add a remote write path “just to finish” a run. Notion writes stay under the Agent Communication hub only.
+7. Preserve absolute remote read-only on ops analysis commands — never add a remote write path “just to finish” a run. Agent handoffs stay in-session.
 8. Keep `lib/multi-agent-loop.md` as the single Task-dispatch contract; command rosters name rule paths, not alternate spawn protocols.

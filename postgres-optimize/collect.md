@@ -101,10 +101,9 @@ Activity >5 min, `idle in transaction`; blocking chains summary.
 
 ## Collect handoff
 
-Publish a brief matching Notion **Handoff Schema** to the hub **Handoffs** DB (and keep an in-session copy):
+Publish an **in-session** collect brief for the parent / next Tasks:
 
 - `run_id`, `fqdn`, `focus`, `pg_version`, `cluster_role`, `from_role`, `phase=collect`
 - `host_summary`, `settings_highlights`, `workload_signals`, `pain_signals[]`, `skipped[]`
-- `notion_bus`: ok | unavailable
 
-If Notion is up, analyze roles **READ** this handoff from the hub before drafting. Then **Read** `analyze.md`.
+Analyze roles **READ** this brief (via `prior_briefs`) before drafting. Then **Read** `analyze.md`.

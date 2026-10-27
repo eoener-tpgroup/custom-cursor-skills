@@ -4,7 +4,7 @@ Loaded by `/remote-analyze database …` after `remote-analyze/_common.md`. Do n
 
 **Invocation:** `/remote-analyze database <fqdn> [focus]`
 
-Shared safety, Notion, agency, Phase 0–2: see `_common.md`. For tuning recommendations use `/postgres-optimize`.
+Shared safety, agency, Phase 0–2: see `_common.md`. For tuning recommendations use `/postgres-optimize`.
 
 ## Arguments
 
@@ -25,7 +25,7 @@ Shared safety, Notion, agency, Phase 0–2: see `_common.md`. For tuning recomme
 | Collect OS | SRE | mounts, PG processes, units, disk on data/WAL |
 | Collect PG | DBRE | cluster role, replication, WAL/archiver, connections, locks |
 | Optional | Database Optimizer | perf signals if focus is slow queries / cache / bloat |
-| Challenge | Reality Checker | READ/WRITE Notion handoffs; evidence gate |
+| Challenge | Reality Checker | READ prior in-session briefs; evidence gate |
 | Optional | Incident Commander | SEV if replication/archiver Critical |
 
 ## Workflow (after Phase 0–2)
@@ -68,7 +68,7 @@ Data/WAL `df -h`; `systemctl is-active`; `journalctl -u <pg_unit> --no-pager -n 
 
 **Focus:** e.g. replication → lag/slots/recovery first with extra depth; keep checklist unless scope limited.
 
-Publish collect briefs to Notion **Handoffs** (OS + PG passes). Remote stays read-only.
+Publish collect briefs in-session (OS + PG passes). Remote stays read-only.
 
 ### Phase 6: Challenge loop (≤ 2)
 
@@ -95,7 +95,6 @@ Same as `_common`: no unevidenced Critical/Warning; optional one read-only recol
 | Cluster role | Primary / Standby |
 | Analysis time | … (UTC) |
 | Agency roster | … |
-| Notion bus | ok / unavailable (hub handoffs) |
 
 ## Findings
 ### ✅ Healthy
@@ -113,7 +112,7 @@ Same as `_common`: no unevidenced Critical/Warning; optional one read-only recol
 ## Recommended next steps
 ```
 
-Advisory only on the remote host. Update Notion **Run Index**. Point to `/postgres-optimize <fqdn>` when tuning is the next step.
+Advisory only on the remote host. Point to `/postgres-optimize <fqdn>` when tuning is the next step.
 
 ### Phase 8: Optional deeper dive
 

@@ -4,7 +4,7 @@ Loaded by `/remote-analyze barman …` after `remote-analyze/_common.md`. Do not
 
 **Invocation:** `/remote-analyze barman <fqdn> [focus]`
 
-Shared safety, Notion, agency, Phase 0–2: see `_common.md`.
+Shared safety, agency, Phase 0–2: see `_common.md`.
 
 ## Arguments
 
@@ -24,7 +24,7 @@ Shared safety, Notion, agency, Phase 0–2: see `_common.md`.
 |------|---------|---------------------|
 | Collect | DBRE | servers, check results, backup age, WAL continuity, disk |
 | Collect OS | SRE | backup mounts, cron presence (list only), logs |
-| Challenge | Reality Checker | READ/WRITE Notion handoffs; evidence gate |
+| Challenge | Reality Checker | READ prior in-session briefs; evidence gate |
 | Optional | Incident Commander | SEV if backups/WAL Critical |
 
 ## Workflow (after Phase 0–2)
@@ -66,7 +66,7 @@ Prefer `sudo -u barman …` when required:
 
 **Focus:** deepen early (WAL gaps, stale backups, named server); keep checklist unless scope limited.
 
-Publish collect briefs to Notion **Handoffs**. Remote stays read-only.
+Publish collect briefs in-session. Remote stays read-only.
 
 ### Phase 7: Challenge loop (≤ 2)
 
@@ -92,7 +92,6 @@ Per `_common`.
 | Barman version | … |
 | Analysis time | … (UTC) |
 | Agency roster | … |
-| Notion bus | ok / unavailable (hub handoffs) |
 
 ## Findings
 ### ✅ Healthy
@@ -110,7 +109,7 @@ Per `_common`.
 ## Recommended next steps
 ```
 
-Advisory only — never trigger backups or WAL switches on the remote host. Update Notion **Run Index**.
+Advisory only — never trigger backups or WAL switches on the remote host.
 
 ### Phase 9: Optional deeper dive
 

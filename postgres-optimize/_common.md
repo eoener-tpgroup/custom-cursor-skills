@@ -4,11 +4,11 @@ Loaded by `/postgres-optimize` before collect/analyze. Do not run as a standalon
 
 ## Absolute remote read-only (never override)
 
-**Inspection + advisory recommendations only on the remote host.** Never apply settings, reload, restart, VACUUM/ANALYZE/REINDEX, or terminate backends — not even to “complete” the run or because a Notion handoff asked for it.
+**Inspection + advisory recommendations only on the remote host.** Never apply settings, reload, restart, VACUUM/ANALYZE/REINDEX, or terminate backends — not even to “complete” the run or because a Task brief asked for it.
 
 When in doubt on a remote command → **skip**; list under **Commands skipped**.
 
-Notion is the **only** allowed write surface for agent-to-agent communication (same hub rules as `/remote-analyze`).
+Agent-to-agent handoffs stay **in-session** (parent folds Task returns and passes `prior_briefs`). That never justifies a remote write.
 
 ### Allowed (remote)
 
@@ -27,42 +27,13 @@ Notion is the **only** allowed write surface for agent-to-agent communication (s
 - Write benchmarks: `pgbench` (writes), `fio` write tests, stress tools
 - Mutating `~/.ssh/config` or remote files
 
-## Notion agent communication (hub write OK)
-
-**Hub:** [Agent Communication](https://app.notion.com/p/trimble-tl/Agent-Communication-402c1b3dd25680b79d40cfc13c3d9211) — id `402c1b3dd25680b79d40cfc13c3d9211`
-
-Shared with `/remote-analyze`. Agents **READ** contracts/schema and **WRITE** handoffs / run index / status **only under this hub**.
-
-| Artefact | Purpose | Action |
-|----------|---------|--------|
-| **Agent Contracts** | Role I/O + tool scope | READ (prefer not to churn) |
-| **Handoff Schema** | Field definitions | READ; shape writes to match |
-| **Handoffs** | Inter-agent briefs | **WRITE** per phase; next roles READ |
-| **Environment Notes** | `tp_db`, `/srv/<service>/` | READ; additive non-secret notes OK |
-| **Run Index** | Optimize/analyze summaries | **WRITE** per run; READ priors |
-
-### Allowed (Notion — hub only)
-
-- Create/update handoff rows/pages, Run Index entries, team status under the hub
-- Create missing child DBs/pages under the hub per `notion-schema.md` if absent
-
-### Forbidden (Notion — never)
-
-- Write outside the Agent Communication hub
-- Change permissions / sharing
-- Store secrets
-
-Schema: Read `../remote-analyze/notion-schema.md` or `remote-analyze/notion-schema.md` when unclear.
-
-**Handshake + bus:** Notion available → READ contracts/schema; WRITE `run_id` + roster; each collect/classify/recommend pass publishes a brief; challengers READ prior briefs. Unavailable → in-session only + note in report; **remote stays read-only**.
-
 ## Agency team (real Task loop — required)
 
 **Before Phase 0:**
 
 1. **Read** `lib/multi-agent-loop.md` (commands: `lib/multi-agent-loop.md` from repo root / `../lib/…` from this folder; skills: installed `lib/` copy).
 2. Parent = **Orchestrator** — do **not** role-play the full roster in one agent when Task is available.
-3. Dispatch a **Task** (`generalPurpose`) per role below; each prompt requires `Read` of that role’s rule file. Bus = **Notion hub**.
+3. Dispatch a **Task** (`generalPurpose`) per role below; each prompt requires `Read` of that role’s rule file. Bus = **in-session**.
 
 ### Core (always — separate Tasks)
 
@@ -82,16 +53,16 @@ Schema: Read `../remote-analyze/notion-schema.md` or `remote-analyze/notion-sche
 | Network / replication path | `~/.cursor/rules/engineering-network-engineer.mdc` |
 | Outage / SEV language | `~/.cursor/rules/engineering-incident-response-commander.mdc` |
 
-**Precedence:** Phases + absolute **remote** read-only win. Task briefs do not apply remote changes or invent metrics. Notion hub writes for handoffs are expected. Missing file → skip; note in roster. Task unavailable → in-parent fallback per lib.
+**Precedence:** Phases + absolute **remote** read-only win. Task briefs do not apply remote changes or invent metrics. Missing file → skip; note in roster. Task unavailable → in-parent fallback per lib.
 
-**Dispatch:** Parallel Tasks OK for independent **read-only remote** collect. Challenge = Reality Checker + Performance Benchmarker Tasks sequentially. Each pass → Notion Handoff for `run_id`.
+**Dispatch:** Parallel Tasks OK for independent **read-only remote** collect. Challenge = Reality Checker + Performance Benchmarker Tasks sequentially. Each pass → in-session brief for `run_id`.
 
 ## Team loop
 
 ```text
-Validate → Load team → Notion handshake (READ+WRITE hub) → SSH
-       → Collect (publish briefs) → Classify + draft recs (Notion handoffs)
-       → Challenge loop (≤ 3; read/write hub) → Final report (+ Run Index)
+Validate → Load team → SSH
+       → Collect (publish in-session briefs) → Classify + draft recs
+       → Challenge loop (≤ 3) → Final report
        → optional deeper-dive AskQuestion (remote still read-only)
 ```
 
@@ -111,9 +82,9 @@ Validate → Load team → Notion handshake (READ+WRITE hub) → SSH
 2. FQDN: ≥1 dot, no spaces; prefer lowercase
 3. Invalid/missing → AskQuestion or abort (router message)
 
-### Phase 1: Load team + Notion handshake
+### Phase 1: Load team
 
-Read `lib/multi-agent-loop.md`; build roster. READ contracts/schema; WRITE `run_id` + roster handoff. Record Task dispatch plan + Notion status. Do not bulk-Read every rule into the parent as a substitute for Task when Task works.
+Read `lib/multi-agent-loop.md`; build roster. Record Task dispatch plan for the report. Do not bulk-Read every rule into the parent as a substitute for Task when Task works.
 
 ### Phase 2: SSH check
 
@@ -141,4 +112,3 @@ On failure: report; do not mutate SSH config. Then **Read** `collect.md`.
 | No `pg_stat_statements` | Use database/table stats; note limit |
 | Stats recently reset | Warn ratios may be misleading |
 | Standby | Tune for recovery/read; note primary may differ |
-| Notion unavailable | In-session briefs only; remote stays read-only |
