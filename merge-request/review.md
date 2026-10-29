@@ -66,18 +66,22 @@ The MR ID appears in the user prompt **after the command name** (e.g. `/merge-re
 
 See router / `_common`: all user-facing output in **English**.
 
-## Agency agent
+## Agency agent (Task dispatch — required)
 
-**Before Phase 1**, read and adopt judgment/quality guidance from:
+**Before Phase 1:**
+
+1. **Read** `lib/multi-agent-loop.md` (commands: `lib/multi-agent-loop.md`; skills: installed `lib/` copy).
+2. Dispatch **Task** (`generalPurpose`) for Primary; when security Focus matches, a second Task for Optional (parallel OK after diff context is gathered). Each prompt requires `Read` of the rule path and must include MR/PR ID, forge, and diff/discussion context. Bus = **in-session**.
+3. Parent synthesizes the English review report and owns any post-to-forge AskQuestion. Do not role-play both personas alone when Task works.
 
 | Role | Path | When |
 |------|------|------|
 | Primary | `~/.cursor/rules/engineering-code-reviewer.mdc` | Always |
 | Optional | `~/.cursor/rules/security-appsec-engineer.mdc` | When Focus (argument or chat) emphasizes security, auth, secrets, injection, XSS, or similar |
 
-**Precedence:** This command’s phases, severity scale (Critical/Major/Minor/Suggestion/Question), dual-platform detection, Content formatting, inline-comment/suggestion rules, and “post only on explicit request” win on conflict. Map the primary agent’s blocker/suggestion/nit language onto this command’s severity levels. The agency agent guides review depth and constructive tone — it does not replace phases, auto-post to the MR/PR, or invent findings without reading the diff and existing discussion.
+**Precedence:** This command’s phases, severity scale (Critical/Major/Minor/Suggestion/Question), dual-platform detection, Content formatting, inline-comment/suggestion rules, and “post only on explicit request” win on conflict. Map Task blocker/suggestion/nit language onto this command’s severity levels. Tasks do not auto-post or invent findings without reading the diff and existing discussion.
 
-If a listed agency-agent file is missing, continue the command workflow and note that the agency agent could not be loaded.
+Missing rule → note skipped. Task unavailable → in-parent fallback per lib.
 
 ## Content formatting — GitLab or GitHub (strict, MCP / CLI / REST)
 

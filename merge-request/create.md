@@ -8,18 +8,22 @@ Pushes the current feature branch and creates a Merge/Pull Request against the d
 
 Platform detection, Content formatting, and Git Safety: see `merge-request/_common.md`.
 
-## Agency agent
+## Agency agent (Task dispatch — required)
 
-**Before Phase 0**, read and adopt judgment/quality guidance from:
+**Before Phase 0:**
+
+1. **Read** `lib/multi-agent-loop.md` (commands: `lib/multi-agent-loop.md`; skills: installed `lib/` copy).
+2. Dispatch **Task** (`generalPurpose`) for Primary (and Optional when matched). Each prompt requires `Read` of the rule path. Bus = **in-session**.
+3. Parent owns platform detection, AskQuestion, push/create — Task briefs guide quality only.
 
 | Role | Path | When |
 |------|------|------|
 | Primary | `~/.cursor/rules/engineering-git-workflow-master.mdc` | Always |
 | Optional | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` | When a Jira ticket key appears in branch name, commits, instructions, or chat context |
 
-**Precedence:** This module’s phases, dual-platform rules from `_common`, and AskQuestion gates win on conflict. Prefer Conventional Commits–style titles and platform Markdown over Gitmoji or agent-specific branch templates unless the **repository** already uses those conventions. The agency agent guides clean history, review-ready summaries, and Jira traceability — it does not replace phases, invent platform clients, or override abort/confirmation rules.
+**Precedence:** This module’s phases, dual-platform rules from `_common`, and AskQuestion gates win on conflict. Prefer Conventional Commits–style titles and platform Markdown over Gitmoji unless the **repository** already uses those conventions. Task briefs guide history/summaries/Jira traceability — they do not invent platform clients or override abort/confirmation.
 
-If a listed agency-agent file is missing, continue the workflow and note that the agency agent could not be loaded.
+Missing rule → note skipped. Task unavailable → in-parent fallback per lib.
 
 ## ⚙️ Optional arguments & context
 

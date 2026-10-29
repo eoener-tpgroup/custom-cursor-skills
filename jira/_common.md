@@ -2,17 +2,21 @@
 
 Loaded by `/jira` before every subcommand. Do not run as a standalone command.
 
-## Agency agent
+## Agency agent (Task dispatch — required)
 
-**Before Phase 1 of the subcommand**, read and adopt judgment/quality guidance from:
+**Before Phase 1 of the subcommand:**
+
+1. **Read** `lib/multi-agent-loop.md` (commands: `lib/multi-agent-loop.md`; skills: installed `lib/` copy).
+2. Dispatch a **Task** (`generalPurpose`) for the Primary role. Prompt must require `Read` of the rule path below. Bus = **in-session**.
+3. Parent remains orchestrator: owns auth, AskQuestion, and MCP/REST writes after confirmation. Do not skip Task when it is available.
 
 | Role | Path |
 |------|------|
 | Primary | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` |
 
-**Precedence:** Command phases, PITOPS/Service Desk field IDs, Wiki Markup formatting, security rules, and AskQuestion gates win on conflict. The agency agent guides ticket hygiene, delivery context, and professional tone — it does not replace phases, invent field IDs/ticket content, or override abort/confirmation rules.
+**Precedence:** Command phases, PITOPS/Service Desk field IDs, Wiki Markup formatting, security rules, and AskQuestion gates win on conflict. The Task brief guides ticket hygiene and tone — it does not replace phases, invent field IDs/ticket content, or override abort/confirmation rules.
 
-If the agency-agent file is missing, continue the workflow and note that the agency agent could not be loaded.
+Missing rule file → continue; note skipped. Task unavailable → in-parent Read fallback per lib.
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Erstellt einen Git-Commit nach Conventional Commits (ohne Emojis/Gitmoji). Erstellt bei Bedarf einen Feature-Branch vom Default-Branch. Für pitops/ansible niemals auf main/master/development/integration/acceptance/production committen — Feature-Branch von development. Optionale Anweisungen oder Chat-Kontext. Bestätigung vor Commit via AskQuestion.
+description: Conventional Commits (no emojis) via light Task + engineering-git-workflow-master rule. Optional feature branch; pitops/ansible never commits on protected env branches. AskQuestion before commit.
 ---
 
 # Commit
@@ -56,6 +56,26 @@ Alles **nach** `/commit` im User-Prompt ist optionaler Freitext (`[instructions]
 - **Niemals** Hooks überspringen (`--no-verify`, `--no-gpg-sign`, etc.)
 - **Niemals** `git commit --amend`, außer alle Bedingungen aus den User-Rules sind erfüllt
 - **Keine** Secrets committen (`.env`, `credentials.json`, API-Keys, Tokens). Warnen und ausschließen
+
+## Agency agent (light Task — required)
+
+**Light pattern** (not a full multi-role loop): one primary Task for message/branch quality; parent owns git inspection, AskQuestion, stage, and commit.
+
+**Before Phase 4 (message draft):**
+
+1. **Read** `lib/multi-agent-loop.md` (commands: sibling `lib/multi-agent-loop.md`; skills: installed `lib/` copy).
+2. Dispatch a **Task** (`generalPurpose`) for Primary. Prompt must require `Read` of the rule path, include summarized `git status` / diff scope / branch context / user instructions, and ask for: Conventional Commit draft (no emojis), suggested branch name if needed, staging scope notes, footer issue refs. Bus = **in-session**.
+3. When a Jira/ticket key appears in branch name, commits, instructions, or chat → optional second Task (or same Task with both rule paths listed) for Optional.
+4. Parent normalizes the draft against this command’s Conventional Commits + no-emoji + ansible branch rules, then runs Phase 5 AskQuestion. Subagents must **not** run `git commit` / `git add` / branch checkout.
+
+| Role | Path | When |
+|------|------|------|
+| Primary | `~/.cursor/rules/engineering-git-workflow-master.mdc` | Always |
+| Optional | `~/.cursor/rules/project-management-jira-workflow-steward.mdc` | Ticket key in branch, commits, instructions, or chat |
+
+**Precedence:** This command’s phases, Git Safety Protocol, Conventional Commits + no-emoji rules, pitops/ansible protected-branch guards, and AskQuestion gates win on conflict. The Task brief guides history hygiene and message quality — it does not amend without meeting user-rule amend conditions, invent a message with insufficient diff/context, or override ansible protected branches.
+
+Missing rule → note skipped; continue. Task unavailable → in-parent Read fallback per lib.
 
 ---
 
@@ -243,13 +263,13 @@ BREAKING CHANGE: /api/v1/* routes are removed. Migrate to /api/v2/*.
 
 #### Message aus Anweisungen, Kontext und Diff ableiten
 
-1. Wenn der User eine vollständige oder teilweise Message vorgegeben hat → **übernehmen**, dann **normalisieren**: Conventional-Commits-Format erzwingen, Emojis/Gitmoji entfernen, Type/Scope/Subject ggf. minimal korrigieren
-2. `git diff --staged` analysieren
+1. Agency Task dispatch (see **Agency agent** above) with status/diff/log summary + instructions; fold the returned draft into the plan
+2. Wenn der User eine vollständige oder teilweise Message vorgegeben hat → **übernehmen**, dann **normalisieren**: Conventional-Commits-Format erzwingen, Emojis/Gitmoji entfernen, Type/Scope/Subject ggf. minimal korrigieren (Parent overrides Task if needed)
 3. Dominanten Type und Scope bestimmen — **Anweisungen/Kontext haben Vorrang** vor reiner Diff-Heuristik
 4. Subject aus dem **Hauptziel** der Änderung formulieren — nur ASCII-Text, keine Emojis
 5. Body nur wenn der Grund nicht offensichtlich ist oder der Kontext ein „Warum" liefert — ebenfalls ohne Emojis
-6. Issue-Referenzen aus Anweisungen/Kontext in den Footer übernehmen
-7. Aus `git log` nur **projektübliche Types/Scopes** und Subject-Ton übernehmen — **nicht** Emoji-/Gitmoji-Stil und **nicht** Nicht-Conventional-Formate. Conventional Commits + No-Emoji haben Vorrang vor Historie
+6. Issue-Referenzen aus Anweisungen/Kontext (und Optional Jira Task) in den Footer übernehmen
+7. Aus `git log` nur **projektübliche Types/Scopes** und Subject-Ton übernehmen — **nicht** Emoji-/Gitmoji-Stil und **nicht** Nicht-Conventional-Formate. Conventional Commits + No-Emoji haben Vorrang vor Historie und vor der Task-Persona
 
 ### Phase 5: Entwurf zeigen und bestätigen lassen (Pflicht)
 
